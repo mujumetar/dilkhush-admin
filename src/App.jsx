@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft } from 'lucide-react';
+import NotFound from './components/NotFound';
 
 // Admin Dashboard Component
 const AdminDashboard = () => {
@@ -911,6 +912,7 @@ function App() {
         <Route path="orders" element={<ManageOrders />} />
         <Route path="orders/:id" element={<OrderDetails />} />
         <Route path="analytics" element={<AnalyticsDashboard />} />
+          <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
