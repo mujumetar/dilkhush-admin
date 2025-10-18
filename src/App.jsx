@@ -11,28 +11,28 @@ const AdminDashboard = () => {
       title: 'Manage Products',
       icon: Package,
       color: 'from-blue-500 to-blue-600',
-      path: '/admin/products',
+      path: '/products',
       description: 'Add, edit, and manage your product inventory'
     },
     {
       title: 'View Contacts',
       icon: MessageSquare,
       color: 'from-purple-500 to-purple-600',
-      path: '/admin/contacts',
+      path: '/contacts',
       description: 'Review customer inquiries and messages'
     },
     {
       title: 'Manage Orders',
       icon: ShoppingCart,
       color: 'from-green-500 to-green-600',
-      path: '/admin/orders',
+      path: '/orders',
       description: 'Track and update order status'
     },
     {
       title: 'Analytics Dashboard',
       icon: BarChart3,
       color: 'from-orange-500 to-orange-600',
-      path: '/admin/analytics',
+      path: '/analytics',
       description: 'View business insights and metrics'
     }
   ];
@@ -126,7 +126,7 @@ const ManageProducts = () => {
     if (formData.image) data.append('image', formData.image);
 
     try {
-      const url = editingId ? `https://dilkhush-api.vercel.app/admin/${editingId}` : 'https://dilkhush-api.vercel.app/admin';
+      const url = editingId ? `https://dilkhush-api.vercel.app/${editingId}` : 'https://dilkhush-api.vercel.app';
       const method = editingId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
@@ -158,7 +158,7 @@ const ManageProducts = () => {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      const response = await fetch(`https://dilkhush-api.vercel.app/admin/${id}`, {
+      const response = await fetch(`https://dilkhush-api.vercel.app/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete product');
@@ -187,7 +187,7 @@ const ManageProducts = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('')}
               className="p-2 hover:bg-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -412,7 +412,7 @@ const ViewContacts = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('')}
             className="p-2 hover:bg-white rounded-lg transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -551,7 +551,7 @@ const ManageOrders = () => {
   };
 
   const handleViewDetails = (order) => {
-    navigate(`/admin/orders/${order._id}`, { state: order });
+    navigate(`/orders/${order._id}`, { state: order });
   };
 
   return (
@@ -561,7 +561,7 @@ const ManageOrders = () => {
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate('')}
               className="p-2 hover:bg-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -850,7 +850,7 @@ const AnalyticsDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('')}
             className="p-2 hover:bg-white rounded-lg transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -906,11 +906,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
-        <Route path="/admin/products" element={<ManageProducts />} />
-        <Route path="/admin/contacts" element={<ViewContacts />} />
-        <Route path="/admin/orders" element={<ManageOrders />} />
-        <Route path="/admin/orders/:id" element={<OrderDetails />} />
-        <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/products" element={<ManageProducts />} />
+        <Route path="/contacts" element={<ViewContacts />} />
+        <Route path="/orders" element={<ManageOrders />} />
+        <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route path="/analytics" element={<AnalyticsDashboard />} />
       </Routes>
     </Router>
   );
