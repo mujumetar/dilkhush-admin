@@ -1,11 +1,22 @@
 {
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
-    { "source": "/", "destination": "/admin", "permanent": true }
+    {
+      "source": "/",
+      "destination": "/admin",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/admin/(.*)", "destination": "/admin/index.html" }
-  ],
-  "routes": [
-    { "src": "/admin/assets/(.*)", "dest": "/admin/assets/$1" }
+    {
+      "source": "/admin/:path*",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/admin/assets/:path*"
+    }
   ]
 }
