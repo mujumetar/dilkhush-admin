@@ -1,5 +1,11 @@
 {
+  "redirects": [
+    { "source": "/", "destination": "/admin", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/admin/(.*)", "destination": "/admin/index.html" }
+  ],
+  "routes": [
+    { "src": "/admin/assets/(.*)", "dest": "/admin/assets/$1" }
   ]
 }
