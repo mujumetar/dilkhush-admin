@@ -97,7 +97,7 @@ const ManageProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:3000/products');
+      const response = await fetch('https://dilkhush-api-49h6.onrender.com/products');
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
       setProducts(data);
@@ -126,7 +126,7 @@ const ManageProducts = () => {
     if (formData.image) data.append('image', formData.image);
 
     try {
-      const url = editingId ? `http://localhost:3000/admin/${editingId}` : 'http://localhost:3000/admin';
+      const url = editingId ? `https://dilkhush-api-49h6.onrender.com/admin/${editingId}` : 'https://dilkhush-api-49h6.onrender.com/admin';
       const method = editingId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
@@ -158,7 +158,7 @@ const ManageProducts = () => {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      const response = await fetch(`http://localhost:3000/admin/${id}`, {
+      const response = await fetch(`https://dilkhush-api-49h6.onrender.com/admin/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete product');
@@ -396,7 +396,7 @@ const ViewContacts = () => {
 
   const fetchContacts = async () => {
     try {
-      const response = await fetch('http://localhost:3000/contact');
+      const response = await fetch('https://dilkhush-api-49h6.onrender.com/contact');
       if (!response.ok) throw new Error('Failed to fetch contacts');
       const data = await response.json();
       setContacts(data);
@@ -482,7 +482,7 @@ const ManageOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://localhost:3000/orders');
+      const response = await fetch('https://dilkhush-api-49h6.onrender.com/orders');
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       setOrders(data);
@@ -527,7 +527,7 @@ const ManageOrders = () => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:3000/orders/${id}`, {
+      const response = await fetch(`https://dilkhush-api-49h6.onrender.com/orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -786,9 +786,9 @@ const AnalyticsDashboard = () => {
   const fetchAnalytics = async () => {
     try {
       const [productsRes, ordersRes, contactsRes] = await Promise.all([
-        fetch('http://localhost:3000/products'),
-        fetch('http://localhost:3000/orders'),
-        fetch('http://localhost:3000/contact'),
+        fetch('https://dilkhush-api-49h6.onrender.com/products'),
+        fetch('https://dilkhush-api-49h6.onrender.com/orders'),
+        fetch('https://dilkhush-api-49h6.onrender.com/contact'),
       ]);
 
       if (!productsRes.ok || !ordersRes.ok || !contactsRes.ok) {
@@ -903,14 +903,14 @@ const AnalyticsDashboard = () => {
 // Main App Component
 function App() {
   return (
-    <Router>
+     <Router basename="/admin">
       <Routes>
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/products" element={<ManageProducts />} />
-        <Route path="/admin/contacts" element={<ViewContacts />} />
-        <Route path="/admin/orders" element={<ManageOrders />} />
-        <Route path="/admin/orders/:id" element={<OrderDetails />} />
-        <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/" element={<AdminDashboard />} />
+        <Route path="products" element={<ManageProducts />} />
+        <Route path="contacts" element={<ViewContacts />} />
+        <Route path="orders" element={<ManageOrders />} />
+        <Route path="orders/:id" element={<OrderDetails />} />
+        <Route path="analytics" element={<AnalyticsDashboard />} />
       </Routes>
     </Router>
   );
