@@ -905,7 +905,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<ManageProducts />} />
         <Route path="/admin/contacts" element={<ViewContacts />} />
         <Route path="/admin/orders" element={<ManageOrders />} />
