@@ -11,28 +11,28 @@ const AdminDashboard = () => {
       title: 'Manage Products',
       icon: Package,
       color: 'from-blue-500 to-blue-600',
-      path: '/products',
+      path: '/admin/products',
       description: 'Add, edit, and manage your product inventory'
     },
     {
       title: 'View Contacts',
       icon: MessageSquare,
       color: 'from-purple-500 to-purple-600',
-      path: '/contacts',
+      path: '/admin/contacts',
       description: 'Review customer inquiries and messages'
     },
     {
       title: 'Manage Orders',
       icon: ShoppingCart,
       color: 'from-green-500 to-green-600',
-      path: '/orders',
+      path: '/admin/orders',
       description: 'Track and update order status'
     },
     {
       title: 'Analytics Dashboard',
       icon: BarChart3,
       color: 'from-orange-500 to-orange-600',
-      path: '/analytics',
+      path: '/admin/analytics',
       description: 'View business insights and metrics'
     }
   ];
@@ -97,7 +97,7 @@ const ManageProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('https://dilkhush-api.vercel.app/products');
+      const response = await fetch('http://localhost:3000/products');
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
       setProducts(data);
@@ -126,7 +126,7 @@ const ManageProducts = () => {
     if (formData.image) data.append('image', formData.image);
 
     try {
-      const url = editingId ? `https://dilkhush-api.vercel.app/${editingId}` : 'https://dilkhush-api.vercel.app';
+      const url = editingId ? `http://localhost:3000/admin/${editingId}` : 'http://localhost:3000/admin';
       const method = editingId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
@@ -158,7 +158,7 @@ const ManageProducts = () => {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      const response = await fetch(`https://dilkhush-api.vercel.app/${id}`, {
+      const response = await fetch(`http://localhost:3000/admin/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete product');
@@ -187,7 +187,7 @@ const ManageProducts = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('')}
+              onClick={() => navigate('/admin')}
               className="p-2 hover:bg-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -396,7 +396,7 @@ const ViewContacts = () => {
 
   const fetchContacts = async () => {
     try {
-      const response = await fetch('https://dilkhush-api.vercel.app/contact');
+      const response = await fetch('http://localhost:3000/contact');
       if (!response.ok) throw new Error('Failed to fetch contacts');
       const data = await response.json();
       setContacts(data);
@@ -412,7 +412,7 @@ const ViewContacts = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate('')}
+            onClick={() => navigate('/admin')}
             className="p-2 hover:bg-white rounded-lg transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -482,7 +482,7 @@ const ManageOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('https://dilkhush-api.vercel.app/orders');
+      const response = await fetch('http://localhost:3000/orders');
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       setOrders(data);
@@ -527,7 +527,7 @@ const ManageOrders = () => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`https://dilkhush-api.vercel.app/orders/${id}`, {
+      const response = await fetch(`http://localhost:3000/orders/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -551,7 +551,7 @@ const ManageOrders = () => {
   };
 
   const handleViewDetails = (order) => {
-    navigate(`/orders/${order._id}`, { state: order });
+    navigate(`/admin/orders/${order._id}`, { state: order });
   };
 
   return (
@@ -561,7 +561,7 @@ const ManageOrders = () => {
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('')}
+              onClick={() => navigate('/admin')}
               className="p-2 hover:bg-white rounded-lg transition-colors"
             >
               <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -786,9 +786,9 @@ const AnalyticsDashboard = () => {
   const fetchAnalytics = async () => {
     try {
       const [productsRes, ordersRes, contactsRes] = await Promise.all([
-        fetch('https://dilkhush-api.vercel.app/products'),
-        fetch('https://dilkhush-api.vercel.app/orders'),
-        fetch('https://dilkhush-api.vercel.app/contact'),
+        fetch('http://localhost:3000/products'),
+        fetch('http://localhost:3000/orders'),
+        fetch('http://localhost:3000/contact'),
       ]);
 
       if (!productsRes.ok || !ordersRes.ok || !contactsRes.ok) {
@@ -850,7 +850,7 @@ const AnalyticsDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate('')}
+            onClick={() => navigate('/admin')}
             className="p-2 hover:bg-white rounded-lg transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-gray-600" />
@@ -905,12 +905,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="/products" element={<ManageProducts />} />
-        <Route path="/contacts" element={<ViewContacts />} />
-        <Route path="/orders" element={<ManageOrders />} />
-        <Route path="/orders/:id" element={<OrderDetails />} />
-        <Route path="/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/products" element={<ManageProducts />} />
+        <Route path="/admin/contacts" element={<ViewContacts />} />
+        <Route path="/admin/orders" element={<ManageOrders />} />
+        <Route path="/admin/orders/:id" element={<OrderDetails />} />
+        <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
       </Routes>
     </Router>
   );
