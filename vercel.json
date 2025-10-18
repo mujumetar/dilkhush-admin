@@ -3,20 +3,9 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/admin",
-      "permanent": true
-    }
+    { "source": "/", "destination": "/admin", "permanent": true }
   ],
   "rewrites": [
-    {
-      "source": "/admin/:path*",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/assets/:path*",
-      "destination": "/admin/assets/:path*"
-    }
+    { "source": "/admin/(.*)", "destination": "/index.html" }
   ]
 }
