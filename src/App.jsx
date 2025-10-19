@@ -108,28 +108,49 @@ const ManageProducts = () => {
       return;
     }
 
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'image' || value) {
-        data.append(key, value);
-      }
-    });
-
     try {
       const url = editingId
         ? `${import.meta.env.VITE_API_URL}/admin/products/${editingId}`
         : `${import.meta.env.VITE_API_URL}/admin/products`;
       const method = editingId ? 'PUT' : 'POST';
-      const headers = { 'Content-Type': 'application/json' };
+
+      let body;
+      let headers = {};
+
+      // If we have an image or we're creating a new product, use FormData
+      if (formData.image || !editingId) {
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('slug', formData.slug);
+        data.append('category', formData.category);
+        data.append('price', formData.price);
+        data.append('stock', formData.stock);
+        if (formData.description) {
+          data.append('description', formData.description);
+        }
+        if (formData.image) {
+          data.append('image', formData.image);
+        }
+        body = data;
+        // Don't set Content-Type header - let browser set it with boundary
+      } else {
+        // If editing without image, send JSON
+        body = JSON.stringify({
+          name: formData.name,
+          slug: formData.slug,
+          category: formData.category,
+          price: formData.price,
+          stock: formData.stock,
+          description: formData.description,
+        });
+        headers['Content-Type'] = 'application/json';
+      }
 
       const response = await fetch(url, {
         method,
         headers,
-        body: editingId && !formData.image
-          ? JSON.stringify(formData)
-          : data,
+        body,
       });
-
 
       if (!response.ok) {
         let errorMessage = 'Unknown error';
