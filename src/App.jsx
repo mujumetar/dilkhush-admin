@@ -20,6 +20,15 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Panel</h1>
+          <button
+            onClick={() => {
+              localStorage.removeItem('adminLoggedIn');
+              window.location.href = '/admin';   // forces a full reload → Login page
+            }}
+            className="flex items-center gap-2 text-red-600 hover:text-red-800"
+          >
+            <X className="w-5 h-5" /> Logout
+          </button>
           <p className="text-gray-600">Manage your e-commerce platform</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -45,6 +54,87 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
+const Login = () => {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    // ── HARD‑CODED CREDENTIALS ───────────────────────────────────────
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = 'admin123';
+    // ─────────────────────────────────────────────────────────────────────
+
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      // Store a tiny flag so the rest of the app knows we’re logged‑in
+      localStorage.setItem('adminLoggedIn', 'true');
+      navigate('/');
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
+          Admin Login
+        </h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3 rounded-xl hover:shadow-lg transition transform hover:scale-105"
+          >
+            Log In
+          </button>
+        </form>
+
+        <p className="mt-6 text-xs text-center text-gray-500">
+          {/* Demo credentials: <strong>admin</strong> / <strong>admin123</strong> */}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 
 // Manage Products Component
 const ManageProducts = () => {
@@ -1787,6 +1877,7 @@ const ViewContacts = () => {
   );
 };
 
+
 // Analytics Dashboard Component (updated with blog count)
 const AnalyticsDashboard = () => {
   const navigate = useNavigate();
@@ -1903,19 +1994,24 @@ const AnalyticsDashboard = () => {
 
 // Main App Component
 function App() {
+  const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
   return (
     <Router basename="/admin">
-      <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="products" element={<ManageProducts />} />
-        <Route path="contacts" element={<ManageContacts />} />
-        <Route path="orders" element={<ManageOrders />} />
-        <Route path="orders/:id" element={<OrderDetails />} />
-        <Route path="blogs" element={<ManageBlogs />} />
-        <Route path="blogs/:id" element={<BlogDetails />} />
-        <Route path="analytics" element={<AnalyticsDashboard />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {isLoggedIn ? (
+        <Routes>
+          <Route path="/" element={<AdminDashboard />} />
+          <Route path="products" element={<ManageProducts />} />
+          <Route path="contacts" element={<ManageContacts />} />
+          <Route path="orders" element={<ManageOrders />} />
+          <Route path="orders/:id" element={<OrderDetails />} />
+          <Route path="blogs" element={<ManageBlogs />} />
+          <Route path="blogs/:id" element={<BlogDetails />} />
+          <Route path="analytics" element={<AnalyticsDashboard />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      ) : (
+        <Login />
+      )}
     </Router>
   );
 }
