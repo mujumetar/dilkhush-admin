@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book } from 'lucide-react';
 import NotFound from './components/NotFound';
 
@@ -46,7 +46,6 @@ const AdminDashboard = () => {
   );
 };
 
-// Manage Products Component
 // Manage Products Component
 const ManageProducts = () => {
   const navigate = useNavigate();
@@ -113,11 +112,11 @@ const ManageProducts = () => {
         ? `${import.meta.env.VITE_API_URL}/admin/products/${editingId}`
         : `${import.meta.env.VITE_API_URL}/admin/products`;
       const method = editingId ? 'PUT' : 'POST';
+      const token = localStorage.getItem('adminToken'); // Retrieve token
 
       let body;
-      let headers = {};
+      let headers = { Authorization: `Bearer ${token}` };
 
-      // If we have an image or we're creating a new product, use FormData
       if (formData.image || !editingId) {
         const data = new FormData();
         data.append('name', formData.name);
@@ -125,16 +124,10 @@ const ManageProducts = () => {
         data.append('category', formData.category);
         data.append('price', formData.price);
         data.append('stock', formData.stock);
-        if (formData.description) {
-          data.append('description', formData.description);
-        }
-        if (formData.image) {
-          data.append('image', formData.image);
-        }
+        if (formData.description) data.append('description', formData.description);
+        if (formData.image) data.append('image', formData.image);
         body = data;
-        // Don't set Content-Type header - let browser set it with boundary
       } else {
-        // If editing without image, send JSON
         body = JSON.stringify({
           name: formData.name,
           slug: formData.slug,
@@ -146,11 +139,7 @@ const ManageProducts = () => {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch(url, {
-        method,
-        headers,
-        body,
-      });
+      const response = await fetch(url, { method, headers, body });
 
       if (!response.ok) {
         let errorMessage = 'Unknown error';
@@ -189,11 +178,13 @@ const ManageProducts = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/products/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        // Add authentication headers if needed
-        // headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -420,7 +411,7 @@ const ManageProducts = () => {
   );
 };
 
-// Manage Contacts Component (Updated with CRUD)
+// Manage Contacts Component
 const ManageContacts = () => {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
@@ -463,11 +454,15 @@ const ManageContacts = () => {
     e.preventDefault();
     setError(null);
     try {
+      const token = localStorage.getItem('adminToken');
       const url = editingId ? `${import.meta.env.VITE_API_URL}/admin/contacts/${editingId}` : `${import.meta.env.VITE_API_URL}/admin/contacts`;
       const method = editingId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
@@ -492,9 +487,13 @@ const ManageContacts = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this contact?')) return;
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/contacts/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -548,7 +547,10 @@ const ManageContacts = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Name</label>
                   <input
-                    type="text" name="name" value={formData.name} onChange={handleInputChange}
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     required
                   />
@@ -556,7 +558,10 @@ const ManageContacts = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                   <input
-                    type="email" name="email" value={formData.email} onChange={handleInputChange}
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     required
                   />
@@ -564,7 +569,10 @@ const ManageContacts = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
                   <textarea
-                    name="message" value={formData.message} onChange={handleInputChange} rows="4"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    rows="4"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                     required
                   />
@@ -578,7 +586,8 @@ const ManageContacts = () => {
                   {editingId ? 'Update Contact' : 'Add Contact'}
                 </button>
                 <button
-                  type="button" onClick={() => { resetForm(); setShowForm(false); }}
+                  type="button"
+                  onClick={() => { resetForm(); setShowForm(false); }}
                   className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                 >
                   Cancel
@@ -641,13 +650,18 @@ const ManageContacts = () => {
   );
 };
 
-// Manage Orders Component (Updated with Full CRUD)
+// Manage Orders Component
 const ManageOrders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [formData, setFormData] = useState({
-    customerName: '', customerEmail: '', customerPhone: '', totalAmount: '', status: 'Pending', paymentStatus: 'Pending',
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    totalAmount: '',
+    status: 'Pending',
+    paymentStatus: 'Pending',
     shippingAddress: { street: '', city: '', state: '', zip: '', country: '' },
     billingAddress: { street: '', city: '', state: '', zip: '', country: '' },
     notes: '',
@@ -728,11 +742,15 @@ const ManageOrders = () => {
     e.preventDefault();
     setError(null);
     try {
+      const token = localStorage.getItem('adminToken');
       const url = editingId ? `${import.meta.env.VITE_API_URL}/admin/orders/${editingId}` : `${import.meta.env.VITE_API_URL}/admin/orders`;
       const method = editingId ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
@@ -767,9 +785,13 @@ const ManageOrders = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this order?')) return;
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/orders/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -784,7 +806,12 @@ const ManageOrders = () => {
 
   const resetForm = () => {
     setFormData({
-      customerName: '', customerEmail: '', customerPhone: '', totalAmount: '', status: 'Pending', paymentStatus: 'Pending',
+      customerName: '',
+      customerEmail: '',
+      customerPhone: '',
+      totalAmount: '',
+      status: 'Pending',
+      paymentStatus: 'Pending',
       shippingAddress: { street: '', city: '', state: '', zip: '', country: '' },
       billingAddress: { street: '', city: '', state: '', zip: '', country: '' },
       notes: '',
@@ -842,7 +869,10 @@ const ManageOrders = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Name</label>
                   <input
-                    type="text" name="customerName" value={formData.customerName} onChange={handleInputChange}
+                    type="text"
+                    name="customerName"
+                    value={formData.customerName}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     required
                   />
@@ -850,7 +880,10 @@ const ManageOrders = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Email</label>
                   <input
-                    type="email" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange}
+                    type="email"
+                    name="customerEmail"
+                    value={formData.customerEmail}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     required
                   />
@@ -858,7 +891,10 @@ const ManageOrders = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Customer Phone</label>
                   <input
-                    type="tel" name="customerPhone" value={formData.customerPhone} onChange={handleInputChange}
+                    type="tel"
+                    name="customerPhone"
+                    value={formData.customerPhone}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     required
                   />
@@ -866,15 +902,21 @@ const ManageOrders = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Total Amount (₹)</label>
                   <input
-                    type="number" name="totalAmount" value={formData.totalAmount} onChange={handleInputChange}
+                    type="number"
+                    name="totalAmount"
+                    value={formData.totalAmount}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                    required min="0"
+                    required
+                    min="0"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                   <select
-                    name="status" value={formData.status} onChange={handleInputChange}
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   >
                     <option value="Pending">Pending</option>
@@ -887,7 +929,9 @@ const ManageOrders = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Payment Status</label>
                   <select
-                    name="paymentStatus" value={formData.paymentStatus} onChange={handleInputChange}
+                    name="paymentStatus"
+                    value={formData.paymentStatus}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   >
                     <option value="Pending">Pending</option>
@@ -897,7 +941,10 @@ const ManageOrders = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
                   <textarea
-                    name="notes" value={formData.notes} onChange={handleInputChange} rows="4"
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows="4"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -907,35 +954,50 @@ const ManageOrders = () => {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Street</label>
                       <input
-                        type="text" name="shippingAddress.street" value={formData.shippingAddress.street} onChange={handleInputChange}
+                        type="text"
+                        name="shippingAddress.street"
+                        value={formData.shippingAddress.street}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
                       <input
-                        type="text" name="shippingAddress.city" value={formData.shippingAddress.city} onChange={handleInputChange}
+                        type="text"
+                        name="shippingAddress.city"
+                        value={formData.shippingAddress.city}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
                       <input
-                        type="text" name="shippingAddress.state" value={formData.shippingAddress.state} onChange={handleInputChange}
+                        type="text"
+                        name="shippingAddress.state"
+                        value={formData.shippingAddress.state}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Zip</label>
                       <input
-                        type="text" name="shippingAddress.zip" value={formData.shippingAddress.zip} onChange={handleInputChange}
+                        type="text"
+                        name="shippingAddress.zip"
+                        value={formData.shippingAddress.zip}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
                       <input
-                        type="text" name="shippingAddress.country" value={formData.shippingAddress.country} onChange={handleInputChange}
+                        type="text"
+                        name="shippingAddress.country"
+                        value={formData.shippingAddress.country}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
@@ -947,35 +1009,50 @@ const ManageOrders = () => {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Street</label>
                       <input
-                        type="text" name="billingAddress.street" value={formData.billingAddress.street} onChange={handleInputChange}
+                        type="text"
+                        name="billingAddress.street"
+                        value={formData.billingAddress.street}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
                       <input
-                        type="text" name="billingAddress.city" value={formData.billingAddress.city} onChange={handleInputChange}
+                        type="text"
+                        name="billingAddress.city"
+                        value={formData.billingAddress.city}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
                       <input
-                        type="text" name="billingAddress.state" value={formData.billingAddress.state} onChange={handleInputChange}
+                        type="text"
+                        name="billingAddress.state"
+                        value={formData.billingAddress.state}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Zip</label>
                       <input
-                        type="text" name="billingAddress.zip" value={formData.billingAddress.zip} onChange={handleInputChange}
+                        type="text"
+                        name="billingAddress.zip"
+                        value={formData.billingAddress.zip}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
                       <input
-                        type="text" name="billingAddress.country" value={formData.billingAddress.country} onChange={handleInputChange}
+                        type="text"
+                        name="billingAddress.country"
+                        value={formData.billingAddress.country}
+                        onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                       />
                     </div>
@@ -990,7 +1067,8 @@ const ManageOrders = () => {
                   {editingId ? 'Update Order' : 'Add Order'}
                 </button>
                 <button
-                  type="button" onClick={() => { resetForm(); setShowForm(false); }}
+                  type="button"
+                  onClick={() => { resetForm(); setShowForm(false); }}
                   className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                 >
                   Cancel
@@ -1111,7 +1189,7 @@ const ManageOrders = () => {
   );
 };
 
-// Order Details Component (Fixed Address Issue)
+// Order Details Component
 const OrderDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -1243,7 +1321,12 @@ const ManageBlogs = () => {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [formData, setFormData] = useState({
-    title: '', slug: '', content: '', author: '', tags: '', image: null,
+    title: '',
+    slug: '',
+    content: '',
+    author: '',
+    tags: '',
+    image: null,
   });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1286,10 +1369,12 @@ const ManageBlogs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    const token = localStorage.getItem('adminToken');
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (key === 'tags') {
-        data.append(key, value.split(',').map((tag) => tag.trim()));
+        // Ensure tags are sent as an array
+        data.append('tags', JSON.stringify(value.split(',').map((tag) => tag.trim()).filter((tag) => tag)));
       } else if (key !== 'image' || value) {
         data.append(key, value);
       }
@@ -1298,24 +1383,38 @@ const ManageBlogs = () => {
     try {
       const url = editingId ? `${import.meta.env.VITE_API_URL}/admin/blogs/${editingId}` : `${import.meta.env.VITE_API_URL}/admin/blogs`;
       const method = editingId ? 'PUT' : 'POST';
-      const response = await fetch(url, { method, body: data });
+      const response = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${editingId ? 'update' : 'add'} blog`);
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+        } catch {
+          errorMessage = `HTTP ${response.status}: Failed to ${editingId ? 'update' : 'add'} blog`;
+        }
+        throw new Error(errorMessage);
       }
       await fetchBlogs();
       resetForm();
       setShowForm(false);
     } catch (err) {
       console.error('Submit blog error:', err);
-      setError(err.message);
+      setError(`Error: ${err.message}`);
     }
   };
 
   const handleEdit = (blog) => {
     setFormData({
-      title: blog.title, slug: blog.slug, content: blog.content, author: blog.author,
-      tags: blog.tags.join(', '), image: null,
+      title: blog.title,
+      slug: blog.slug,
+      content: blog.content,
+      author: blog.author,
+      tags: blog.tags.join(', '),
+      image: null,
     });
     setEditingId(blog._id);
     setShowForm(true);
@@ -1324,9 +1423,13 @@ const ManageBlogs = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this blog?')) return;
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/blogs/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -1384,7 +1487,10 @@ const ManageBlogs = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
                   <input
-                    type="text" name="title" value={formData.title} onChange={handleInputChange}
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     required
                   />
@@ -1392,7 +1498,10 @@ const ManageBlogs = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Slug</label>
                   <input
-                    type="text" name="slug" value={formData.slug} onChange={handleInputChange}
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     required
                   />
@@ -1400,7 +1509,10 @@ const ManageBlogs = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Author</label>
                   <input
-                    type="text" name="author" value={formData.author} onChange={handleInputChange}
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     required
                   />
@@ -1408,7 +1520,10 @@ const ManageBlogs = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Tags (comma-separated)</label>
                   <input
-                    type="text" name="tags" value={formData.tags} onChange={handleInputChange}
+                    type="text"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="e.g., news, updates, tips"
                   />
@@ -1416,14 +1531,19 @@ const ManageBlogs = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Image</label>
                   <input
-                    type="file" onChange={handleFileChange} accept="image/*"
+                    type="file"
+                    onChange={handleFileChange}
+                    accept="image/*"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Content</label>
                   <textarea
-                    name="content" value={formData.content} onChange={handleInputChange} rows="6"
+                    name="content"
+                    value={formData.content}
+                    onChange={handleInputChange}
+                    rows="6"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     required
                   />
@@ -1437,7 +1557,8 @@ const ManageBlogs = () => {
                   {editingId ? 'Update Blog' : 'Add Blog'}
                 </button>
                 <button
-                  type="button" onClick={() => { resetForm(); setShowForm(false); }}
+                  type="button"
+                  onClick={() => { resetForm(); setShowForm(false); }}
                   className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                 >
                   Cancel
@@ -1502,6 +1623,7 @@ const ManageBlogs = () => {
                           </button>
                         </div>
                       </td>
+
                     </tr>
                   ))
                 )}
@@ -1569,7 +1691,7 @@ const BlogDetails = () => {
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 space-y-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">{blog.title}</h1>
         {blog.image && (
-          <img src={`${import.meta.env.VITE_API_URL}${blog.image}`} alt={blog.title} className="w-full h-64 object-cover rounded-xl mb-4" />
+          <img src={blog.image} alt={blog.title} className="w-full h-64 object-cover rounded-xl mb-4" />
         )}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -1585,10 +1707,8 @@ const BlogDetails = () => {
         </div>
       </div>
     </div>
-
   );
 };
-
 
 // View Contacts Component (unchanged)
 const ViewContacts = () => {
@@ -1666,7 +1786,6 @@ const ViewContacts = () => {
     </div>
   );
 };
-
 
 // Analytics Dashboard Component (updated with blog count)
 const AnalyticsDashboard = () => {
@@ -1789,7 +1908,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
         <Route path="products" element={<ManageProducts />} />
-        <Route path="contacts" element={<ViewContacts />} />
+        <Route path="contacts" element={<ManageContacts />} />
         <Route path="orders" element={<ManageOrders />} />
         <Route path="orders/:id" element={<OrderDetails />} />
         <Route path="blogs" element={<ManageBlogs />} />

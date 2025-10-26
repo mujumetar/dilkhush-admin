@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "redirects": [
-    { "source": "/", "destination": "/admin", "permanent": true }
+  "builds": [
+    { "src": "package.json", "use": "@vercel/static-build" }
   ],
-  "rewrites": [
-    { "source": "/admin/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
   ]
 }
