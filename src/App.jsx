@@ -1342,6 +1342,7 @@ const OrderDetails = () => {
       </button>
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 space-y-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Order #{order._id.slice(-8)}</h1>
+
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h2 className="text-lg font-semibold mb-2 text-gray-800">Customer Info</h2>
@@ -1400,6 +1401,9 @@ const OrderDetails = () => {
               </tbody>
             </table>
           </div>
+                  <button onClick={() => window.print()} className="btn bg-primary mt-5 border p-2 rounded">
+          Print Page
+        </button>
         </div>
       </div>
     </div>
