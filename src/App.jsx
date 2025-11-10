@@ -8,6 +8,8 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const cards = [
+    { title: 'Ingredients Control', icon: Package, color: 'from-pink-500 to-pink-600', path: '/ingredients', description: 'Add Sesame, Spices, Prices, Variants' },
+    { title: 'Custom Mix Orders', icon: ShoppingCart, color: 'from-teal-500 to-teal-600', path: '/custom-orders', description: 'View & manage user-built mixes' },
     { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, and manage your product inventory' },
     { title: 'Manage Contacts', icon: MessageSquare, color: 'from-purple-500 to-purple-600', path: '/contacts', description: 'Review and manage customer inquiries' },
     { title: 'Manage Orders', icon: ShoppingCart, color: 'from-green-500 to-green-600', path: '/orders', description: 'Track, update, and manage orders' },
@@ -739,7 +741,87 @@ const ManageContacts = () => {
     </div>
   );
 };
+// === MANAGE INGREDIENTS ===
 
+
+// === CUSTOM MIX ORDERS ===
+const CustomMixOrders = () => {
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API = 'https://dilkhush-api.vercel.app';
+
+  useEffect(() => {
+    fetch(`${API}/custom/order`)
+      .then(r => r.json())
+      .then(data => setOrders(Array.isArray(data) ? data : []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const updateStatus = async (id, status) => {
+    await fetch(`${API}/custom/order/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    setOrders(orders.map(o => o._id === id ? { ...o, status } : o));
+  };
+
+  const sendWhatsApp = (phone, name, total) => {
+    const msg = `Hello ${name}! Your custom mix order (₹${total}) is ready! Collect from Dilkhush Kirana.`;
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-white rounded-lg"><ArrowLeft className="w-6 h-6" /></button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Custom Mix Orders</h1>
+            <p className="text-gray-600">Users built their own mix — like Domino's!</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {loading ? <p>Loading orders...</p> : orders.length === 0 ? <p>No custom orders yet</p> : orders.map(order => (
+            <div key={order._id} className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xl font-bold">{order.customerName}</h3>
+                  <p>₹{order.totalPrice} • {new Date(order.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">Phone: {order.customerPhone}</p>
+                </div>
+                <select value={order.status} onChange={e => updateStatus(order._id, e.target.value)} className="px-4 py-2 border rounded-lg">
+                  <option>Pending</option><option>Confirmed</option><option>Preparing</option><option>Ready</option><option>Delivered</option>
+                </select>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 mb-4">
+                {order.selectedIngredients.map((item, i) => (
+                  <div key={i} className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-semibold">{item.ingredientId.name}</p>
+                    <p className="text-sm">{item.variant} • {item.quantity}kg • ₹{item.price}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => sendWhatsApp(order.customerPhone, order.customerName, order.totalPrice)} className="bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+                  WhatsApp
+                </button>
+                <button onClick={() => window.print()} className="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                  Print Receipt
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 // Manage Orders Component
 const ManageOrders = () => {
   const navigate = useNavigate();
@@ -1279,6 +1361,260 @@ const ManageOrders = () => {
   );
 };
 
+
+const ManageIngredients = () => {
+  const [ingredients, setIngredients] = useState([]);
+  const [form, setForm] = useState({ name: '', category: '', image: null });
+  const [variants, setVariants] = useState([
+    { quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }
+  ]);
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // FETCH INGREDIENTS ON MOUNT
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
+
+  const fetchIngredients = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('https://dilkhush-api.vercel.app/custom/ingredients');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setIngredients(data);
+    } catch (err) {
+      setError('Failed to load ingredients: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addVariant = () => {
+    setVariants([...variants, { 
+      quality: 'Premium', 
+      pricePerKg: 150, 
+      minQuantity: 100, 
+      unit: 'g' 
+    }]);
+  };
+
+  const updateVariant = (i, field, value) => {
+    const updated = [...variants];
+    if (field === 'pricePerKg' || field === 'minQuantity') {
+      updated[i][field] = parseFloat(value) || 0;
+    } else {
+      updated[i][field] = value;
+    }
+    setVariants(updated);
+  };
+
+  const removeVariant = (i) => {
+    setVariants(variants.filter((_, idx) => idx !== i));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.category || variants.length === 0) {
+      alert('Fill all fields!');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('name', form.name);
+    data.append('category', form.category);
+    data.append('variants', JSON.stringify(variants));
+    if (form.image) data.append('image', form.image);
+
+    try {
+      const url = editingId 
+        ? `https://dilkhush-api.vercel.app/admin/ingredients/${editingId}`
+        : 'https://dilkhush-api.vercel.app/admin/ingredients';
+
+      const res = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        body: data,
+      });
+
+      if (!res.ok) throw new Error('Failed to save');
+      
+      alert(editingId ? 'Updated!' : 'Added!');
+      setForm({ name: '', category: '', image: null });
+      setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
+      setEditingId(null);
+      fetchIngredients(); // REFRESH LIST
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const editIngredient = (ing) => {
+    setForm({ name: ing.name, category: ing.category, image: null });
+    setVariants(ing.variants || []);
+    setEditingId(ing._id);
+    window.scrollTo(0, 0);
+  };
+
+  const deleteIngredient = async (id) => {
+    if (!confirm('Delete this ingredient?')) return;
+    try {
+      await fetch(`https://dilkhush-api.vercel.app/admin/ingredients/${id}`, { method: 'DELETE' });
+      fetchIngredients();
+    } catch (err) {
+      alert('Delete failed');
+    }
+  };
+
+  if (loading) return <div className="text-center py-5"><h2>Loading Ingredients...</h2></div>;
+  if (error) return <div className="alert alert-danger text-center">{error}</div>;
+
+  return (
+    <div className="container py-5">
+      <h1 className="text-center mb-5 fw-bold text-primary">Manage Ingredients</h1>
+
+      {/* ADD / EDIT FORM */}
+      <div className="card shadow-lg mb-5 border-0">
+        <div className="card-body p-5">
+          <h3 className="text-success mb-4">{editingId ? 'Edit' : 'Add New'} Ingredient</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <input
+                  type="text"
+                  className="form-control form-control-lg"
+                  placeholder="Ingredient Name *"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-md-6">
+                <input
+                  type="text"
+                  className="form-control form-control-lg"
+                  placeholder="Category (e.g. Dry Fruits)"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="col-12">
+                <input
+                  type="file"
+                  className="form-control"
+                  accept="image/*"
+                  onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
+                />
+              </div>
+            </div>
+
+            <h5 className="mt-4 text-info">Variants</h5>
+            {variants.map((v, i) => (
+              <div key={i} className="border p-3 rounded mb-2 bg-light">
+                <div className="row g-2">
+                  <div className="col-md-3">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Quality (Standard/Premium)"
+                      value={v.quality}
+                      onChange={(e) => updateVariant(i, 'quality', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Price/kg"
+                      value={v.pricePerKg}
+                      onChange={(e) => updateVariant(i, 'pricePerKg', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-2">
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="form-control"
+                      placeholder="Min Qty"
+                      value={v.minQuantity}
+                      onChange={(e) => updateVariant(i, 'minQuantity', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-2">
+                    <select
+                      className="form-control"
+                      value={v.unit}
+                      onChange={(e) => updateVariant(i, 'unit', e.target.value)}
+                    >
+                      <option value="kg">kg</option>
+                      <option value="g">g</option>
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <button
+                      type="button"
+                      className="btn btn-danger w-100"
+                      onClick={() => removeVariant(i)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="mt-3">
+              <button type="button" className="btn btn-outline-primary me-2" onClick={addVariant}>
+                + Add Variant
+              </button>
+              <button type="submit" className="btn btn-success btn-lg">
+                {editingId ? 'Update' : 'Add'} Ingredient
+              </button>
+              {editingId && (
+                <button type="button" className="btn btn-secondary ms-2" onClick={() => {
+                  setEditingId(null);
+                  setForm({ name: '', category: '', image: null });
+                  setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
+                }}>
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* LIST OF INGREDIENTS */}
+      <h3 className="text-center mb-4">All Ingredients ({ingredients.length})</h3>
+      <div className="row g-4">
+        {ingredients.map((ing) => (
+          <div key={ing._id} className="col-md-4">
+            <div className="card h-100 shadow-sm">
+              {ing.image && (
+                <img src={ing.image} className="card-img-top" style={{ height: '200px', objectFit: 'cover' }} alt={ing.name} />
+              )}
+              <div className="card-body">
+                <h5 className="card-title">{ing.name}</h5>
+                <p className="text-muted">{ing.category}</p>
+                <p><strong>Variants:</strong> {ing.variants?.length || 0}</p>
+                <div className="btn-group w-100">
+                  <button className="btn btn-warning" onClick={() => editIngredient(ing)}>
+                    Edit
+                  </button>
+                  <button className="btn btn-danger" onClick={() => deleteIngredient(ing._id)}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Order Details Component
 const OrderDetails = () => {
   const navigate = useNavigate();
@@ -1401,9 +1737,9 @@ const OrderDetails = () => {
               </tbody>
             </table>
           </div>
-                  <button onClick={() => window.print()} className="btn bg-primary mt-5 border p-2 rounded">
-          Print Page
-        </button>
+          <button onClick={() => window.print()} className="btn bg-primary mt-5 border p-2 rounded">
+            Print Page
+          </button>
         </div>
       </div>
     </div>
@@ -2009,6 +2345,8 @@ function App() {
           <Route path="orders" element={<ManageOrders />} />
           <Route path="orders/:id" element={<OrderDetails />} />
           <Route path="blogs" element={<ManageBlogs />} />
+          <Route path="ingredients" element={<ManageIngredients />} />
+          <Route path="custom-orders" element={<CustomMixOrders />} />
           <Route path="blogs/:id" element={<BlogDetails />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route path="*" element={<NotFound />} />
