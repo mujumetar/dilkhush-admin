@@ -1526,36 +1526,50 @@ const ManageIngredients = () => {
             {variants.map((v, i) => (
               <div key={i} className="bg-white border p-3 rounded mb-3">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Quality"
-                    className="border p-2 rounded"
-                    value={v.quality}
-                    onChange={(e) => updateVariant(i, "quality", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price per kg"
-                    className="border p-2 rounded"
-                    value={v.pricePerKg}
-                    onChange={(e) => updateVariant(i, "pricePerKg", e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Min Quantity"
-                    className="border p-2 rounded"
-                    value={v.minQuantity}
-                    onChange={(e) => updateVariant(i, "minQuantity", e.target.value)}
-                  />
-                  <select
-                    className="border p-2 rounded"
-                    value={v.unit}
-                    onChange={(e) => updateVariant(i, "unit", e.target.value)}
-                  >
-                    <option value="kg">kg</option>
-                    <option value="g">g</option>
-                  </select>
+                  <div className="flex flex-col">
+                    quality
+                    <input
+                      type="text"
+                      placeholder="Quality"
+                      className="border p-2 rounded"
+                      value={v.quality}
+                      onChange={(e) => updateVariant(i, "quality", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    price/kg
+                    <input
+                      type="number"
+                      placeholder="Price per kg"
+                      className="border p-2 rounded"
+                      value={v.pricePerKg}
+                      onChange={(e) => updateVariant(i, "pricePerKg", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    min quantity
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Min Quantity"
+                      className="border p-2 rounded"
+                      value={v.minQuantity}
+                      onChange={(e) => updateVariant(i, "minQuantity", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    kg/g
+
+                    <select
+                      className="border p-2 rounded"
+                      value={v.unit}
+                      onChange={(e) => updateVariant(i, "unit", e.target.value)}
+                    >
+                      <option value="kg">kg</option>
+                      <option value="g">g</option>
+                    </select>
+                  </div>
+
                 </div>
                 {variants.length > 1 && (
                   <button
@@ -1579,9 +1593,8 @@ const ManageIngredients = () => {
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={handleSubmit}
-              className={`px-4 py-2 text-white rounded ${
-                editingId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-600 hover:bg-green-700"
-              }`}
+              className={`px-4 py-2 text-white rounded ${editingId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-600 hover:bg-green-700"
+                }`}
             >
               {editingId ? "Update Ingredient" : "Add Ingredient"}
             </button>
