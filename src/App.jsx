@@ -1470,147 +1470,244 @@ const ManageIngredients = () => {
   if (error) return <div className="alert alert-danger text-center">{error}</div>;
 
   return (
-    <div className="container py-5">
-      <h1 className="text-center mb-5 fw-bold text-primary">Manage Ingredients</h1>
+    <div className="min-vh-100 bg-light">
+      <div className="container py-5">
+        {/* Header */}
+        <div className="text-center mb-5">
+          <h1 className="display-4 fw-bold text-dark mb-2">
+            <span className="text-success">Ingredient</span> Manager
+          </h1>
+          <p className="text-muted fs-5">Manage your inventory with ease</p>
+        </div>
 
-      {/* ADD / EDIT FORM */}
-      <div className="card shadow-lg mb-5 border-0">
-        <div className="card-body p-5">
-          <h3 className="text-success mb-4">{editingId ? 'Edit' : 'Add New'} Ingredient</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="row g-3">
+        {/* ADD / EDIT FORM */}
+        <div className="card border-0 shadow-sm mb-5">
+          <div className="card-header bg-white border-0 pt-4 pb-3">
+            <h4 className="mb-0 fw-semibold">
+              {editingId ? (
+                <><i className="bi bi-pencil-square text-warning me-2"></i>Edit Ingredient</>
+              ) : (
+                <><i className="bi bi-plus-circle text-success me-2"></i>Add New Ingredient</>
+              )}
+            </h4>
+          </div>
+          <div className="card-body p-4">
+            {/* Basic Info */}
+            <div className="row g-3 mb-4">
               <div className="col-md-6">
+                <label className="form-label fw-semibold text-dark">Ingredient Name</label>
                 <input
                   type="text"
-                  className="form-control form-control-lg"
-                  placeholder="Ingredient Name *"
+                  className="form-control form-control-lg border-2"
+                  placeholder="Enter ingredient name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
                 />
               </div>
               <div className="col-md-6">
+                <label className="form-label fw-semibold text-dark">Category</label>
                 <input
                   type="text"
-                  className="form-control form-control-lg"
-                  placeholder="Category (e.g. Dry Fruits)"
+                  className="form-control form-control-lg border-2"
+                  placeholder="e.g., Dry Fruits, Spices"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  required
                 />
               </div>
               <div className="col-12">
+                <label className="form-label fw-semibold text-dark">Image Upload</label>
                 <input
                   type="file"
-                  className="form-control"
+                  className="form-control form-control-lg border-2"
                   accept="image/*"
                   onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
                 />
               </div>
             </div>
 
-            <h5 className="mt-4 text-info">Variants</h5>
-            {variants.map((v, i) => (
-              <div key={i} className="border p-3 rounded mb-2 bg-light">
-                <div className="row g-2">
-                  <div className="col-md-3">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Quality (Standard/Premium)"
-                      value={v.quality}
-                      onChange={(e) => updateVariant(i, 'quality', e.target.value)}
-                    />
+            {/* Variants Section */}
+            <div className="border-top pt-4 mt-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 fw-semibold text-dark">
+                  <i className="bi bi-boxes text-primary me-2"></i>Product Variants
+                </h5>
+                <span className="badge bg-primary">{variants.length} variant{variants.length !== 1 ? 's' : ''}</span>
+              </div>
+
+              {variants.map((v, i) => (
+                <div key={i} className="card mb-3 border-2">
+                  <div className="card-body p-3">
+                    <div className="row g-2 align-items-end">
+                      <div className="col-md-3">
+                        <label className="form-label small fw-semibold text-muted">Quality</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Standard/Premium"
+                          value={v.quality}
+                          onChange={(e) => updateVariant(i, 'quality', e.target.value)}
+                        />
+                      </div>
+                      <div className="col-md-3">
+                        <label className="form-label small fw-semibold text-muted">Price per kg (₹)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          placeholder="100"
+                          value={v.pricePerKg}
+                          onChange={(e) => updateVariant(i, 'pricePerKg', e.target.value)}
+                        />
+                      </div>
+                      <div className="col-md-2">
+                        <label className="form-label small fw-semibold text-muted">Min Qty</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control"
+                          placeholder="0.25"
+                          value={v.minQuantity}
+                          onChange={(e) => updateVariant(i, 'minQuantity', e.target.value)}
+                        />
+                      </div>
+                      <div className="col-md-2">
+                        <label className="form-label small fw-semibold text-muted">Unit</label>
+                        <select
+                          className="form-select"
+                          value={v.unit}
+                          onChange={(e) => updateVariant(i, 'unit', e.target.value)}
+                        >
+                          <option value="kg">kg</option>
+                          <option value="g">g</option>
+                        </select>
+                      </div>
+                      <div className="col-md-2">
+                        <button
+                          type="button"
+                          className="btn btn-outline-danger w-100"
+                          onClick={() => removeVariant(i)}
+                          disabled={variants.length === 1}
+                        >
+                          <i className="bi bi-trash"></i> Remove
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="col-md-3">
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Price/kg"
-                      value={v.pricePerKg}
-                      onChange={(e) => updateVariant(i, 'pricePerKg', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-control"
-                      placeholder="Min Qty"
-                      value={v.minQuantity}
-                      onChange={(e) => updateVariant(i, 'minQuantity', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-2">
-                    <select
-                      className="form-control"
-                      value={v.unit}
-                      onChange={(e) => updateVariant(i, 'unit', e.target.value)}
-                    >
-                      <option value="kg">kg</option>
-                      <option value="g">g</option>
-                    </select>
-                  </div>
-                  <div className="col-md-2">
-                    <button
-                      type="button"
-                      className="btn btn-danger w-100"
-                      onClick={() => removeVariant(i)}
-                    >
-                      Remove
-                    </button>
+                </div>
+              ))}
+
+              <button 
+                type="button" 
+                className="btn btn-outline-primary"
+                onClick={addVariant}
+              >
+                <i className="bi bi-plus-lg me-2"></i>Add Another Variant
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-top pt-4 mt-4 d-flex gap-2 flex-wrap">
+              <button 
+                type="button"
+                className="btn btn-success btn-lg px-4"
+                onClick={handleSubmit}
+              >
+                <i className={`bi bi-${editingId ? 'check-circle' : 'plus-circle'} me-2`}></i>
+                {editingId ? 'Update' : 'Add'} Ingredient
+              </button>
+              {editingId && (
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary btn-lg px-4"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm({ name: '', category: '', image: null });
+                    setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
+                  }}
+                >
+                  <i className="bi bi-x-circle me-2"></i>Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* LIST OF INGREDIENTS */}
+        <div className="mb-4">
+          <div className="d-flex justify-content-between align-items-center">
+            <h3 className="fw-semibold text-dark mb-0">
+              <i className="bi bi-list-ul text-primary me-2"></i>All Ingredients
+            </h3>
+            <span className="badge bg-dark fs-6">{ingredients.length} total</span>
+          </div>
+          <hr className="my-3"/>
+        </div>
+
+        {ingredients.length === 0 ? (
+          <div className="text-center py-5">
+            <div className="text-muted">
+              <i className="bi bi-inbox" style={{fontSize: '4rem'}}></i>
+              <p className="mt-3 fs-5">No ingredients added yet</p>
+              <p className="text-muted">Start by adding your first ingredient above</p>
+            </div>
+          </div>
+        ) : (
+          <div className="row g-4">
+            {ingredients.map((ing) => (
+              <div key={ing._id} className="col-lg-4 col-md-6">
+                <div className="card h-100 border-0 shadow-sm hover-shadow transition">
+                  {ing.image && (
+                    <div className="position-relative overflow-hidden" style={{height: '220px'}}>
+                      <img 
+                        src={ing.image} 
+                        className="card-img-top w-100 h-100" 
+                        style={{objectFit: 'cover'}} 
+                        alt={ing.name} 
+                      />
+                      <div className="position-absolute top-0 end-0 m-2">
+                        <span className="badge bg-dark bg-opacity-75">{ing.category}</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="card-body">
+                    <h5 className="card-title fw-bold text-dark mb-2">{ing.name}</h5>
+                    {!ing.image && <p className="text-muted small mb-2">{ing.category}</p>}
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="bi bi-boxes text-primary me-2"></i>
+                      <span className="text-muted small">
+                        {ing.variants?.length || 0} variant{(ing.variants?.length || 0) !== 1 ? 's' : ''} available
+                      </span>
+                    </div>
+                    <div className="d-grid gap-2">
+                      <button 
+                        className="btn btn-outline-warning"
+                        onClick={() => editIngredient(ing)}
+                      >
+                        <i className="bi bi-pencil me-2"></i>Edit
+                      </button>
+                      <button 
+                        className="btn btn-outline-danger"
+                        onClick={() => deleteIngredient(ing._id)}
+                      >
+                        <i className="bi bi-trash me-2"></i>Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-
-            <div className="mt-3">
-              <button type="button" className="btn btn-outline-primary me-2" onClick={addVariant}>
-                + Add Variant
-              </button>
-              <button type="submit" className="btn btn-success btn-lg">
-                {editingId ? 'Update' : 'Add'} Ingredient
-              </button>
-              {editingId && (
-                <button type="button" className="btn btn-secondary ms-2" onClick={() => {
-                  setEditingId(null);
-                  setForm({ name: '', category: '', image: null });
-                  setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
-                }}>
-                  Cancel Edit
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* LIST OF INGREDIENTS */}
-      <h3 className="text-center mb-4">All Ingredients ({ingredients.length})</h3>
-      <div className="row g-4">
-        {ingredients.map((ing) => (
-          <div key={ing._id} className="col-md-4">
-            <div className="card h-100 shadow-sm">
-              {ing.image && (
-                <img src={ing.image} className="card-img-top" style={{ height: '200px', objectFit: 'cover' }} alt={ing.name} />
-              )}
-              <div className="card-body">
-                <h5 className="card-title">{ing.name}</h5>
-                <p className="text-muted">{ing.category}</p>
-                <p><strong>Variants:</strong> {ing.variants?.length || 0}</p>
-                <div className="btn-group w-100">
-                  <button className="btn btn-warning" onClick={() => editIngredient(ing)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger" onClick={() => deleteIngredient(ing._id)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
-        ))}
+        )}
       </div>
+
+      <style jsx>{`
+        .hover-shadow {
+          transition: all 0.3s ease;
+        }
+        .hover-shadow:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+        }
+      `}</style>
     </div>
   );
 };
