@@ -1361,18 +1361,16 @@ const ManageOrders = () => {
   );
 };
 
-
 const ManageIngredients = () => {
   const [ingredients, setIngredients] = useState([]);
-  const [form, setForm] = useState({ name: '', category: '', image: null });
+  const [form, setForm] = useState({ name: "", category: "", image: null });
   const [variants, setVariants] = useState([
-    { quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }
+    { quality: "Standard", pricePerKg: 100, minQuantity: 0.25, unit: "kg" },
   ]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  // FETCH INGREDIENTS ON MOUNT
   useEffect(() => {
     fetchIngredients();
   }, []);
@@ -1380,29 +1378,27 @@ const ManageIngredients = () => {
   const fetchIngredients = async () => {
     try {
       setLoading(true);
-      const res = await fetch('https://dilkhush-api.vercel.app/custom/ingredients');
-      if (!res.ok) throw new Error('Failed to fetch');
+      const res = await fetch("https://dilkhush-api.vercel.app/custom/ingredients");
+      if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setIngredients(data);
     } catch (err) {
-      setError('Failed to load ingredients: ' + err.message);
+      setError("Failed to load ingredients: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const addVariant = () => {
-    setVariants([...variants, { 
-      quality: 'Premium', 
-      pricePerKg: 150, 
-      minQuantity: 100, 
-      unit: 'g' 
-    }]);
+    setVariants([
+      ...variants,
+      { quality: "Premium", pricePerKg: 150, minQuantity: 100, unit: "g" },
+    ]);
   };
 
   const updateVariant = (i, field, value) => {
     const updated = [...variants];
-    if (field === 'pricePerKg' || field === 'minQuantity') {
+    if (field === "pricePerKg" || field === "minQuantity") {
       updated[i][field] = parseFloat(value) || 0;
     } else {
       updated[i][field] = value;
@@ -1410,42 +1406,39 @@ const ManageIngredients = () => {
     setVariants(updated);
   };
 
-  const removeVariant = (i) => {
-    setVariants(variants.filter((_, idx) => idx !== i));
-  };
+  const removeVariant = (i) => setVariants(variants.filter((_, idx) => idx !== i));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.category || variants.length === 0) {
-      alert('Fill all fields!');
+      alert("Please fill all fields!");
       return;
     }
 
     const data = new FormData();
-    data.append('name', form.name);
-    data.append('category', form.category);
-    data.append('variants', JSON.stringify(variants));
-    if (form.image) data.append('image', form.image);
+    data.append("name", form.name);
+    data.append("category", form.category);
+    data.append("variants", JSON.stringify(variants));
+    if (form.image) data.append("image", form.image);
 
     try {
-      const url = editingId 
+      const url = editingId
         ? `https://dilkhush-api.vercel.app/admin/ingredients/${editingId}`
-        : 'https://dilkhush-api.vercel.app/admin/ingredients';
+        : "https://dilkhush-api.vercel.app/admin/ingredients";
 
       const res = await fetch(url, {
-        method: editingId ? 'PUT' : 'POST',
+        method: editingId ? "PUT" : "POST",
         body: data,
       });
+      if (!res.ok) throw new Error("Failed to save ingredient");
 
-      if (!res.ok) throw new Error('Failed to save');
-      
-      alert(editingId ? 'Updated!' : 'Added!');
-      setForm({ name: '', category: '', image: null });
-      setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
+      alert(editingId ? "Ingredient updated!" : "Ingredient added!");
+      setForm({ name: "", category: "", image: null });
+      setVariants([{ quality: "Standard", pricePerKg: 100, minQuantity: 0.25, unit: "kg" }]);
       setEditingId(null);
-      fetchIngredients(); // REFRESH LIST
+      fetchIngredients();
     } catch (err) {
-      alert('Error: ' + err.message);
+      alert("Error: " + err.message);
     }
   };
 
@@ -1457,260 +1450,207 @@ const ManageIngredients = () => {
   };
 
   const deleteIngredient = async (id) => {
-    if (!confirm('Delete this ingredient?')) return;
+    if (!confirm("Delete this ingredient?")) return;
     try {
-      await fetch(`https://dilkhush-api.vercel.app/admin/ingredients/${id}`, { method: 'DELETE' });
+      await fetch(`https://dilkhush-api.vercel.app/admin/ingredients/${id}`, { method: "DELETE" });
       fetchIngredients();
     } catch (err) {
-      alert('Delete failed');
+      alert("Delete failed");
     }
   };
 
-  if (loading) return <div className="text-center py-5"><h2>Loading Ingredients...</h2></div>;
-  if (error) return <div className="alert alert-danger text-center">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-3 text-gray-600">Loading ingredients...</p>
+        </div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="text-red-600 font-medium bg-red-100 p-4 rounded">{error}</div>
+      </div>
+    );
 
   return (
-    <div className="min-vh-100 bg-light">
-      <div className="container py-5">
+    <div className="bg-gray-50 min-h-screen py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-5">
-          <h1 className="display-4 fw-bold text-dark mb-2">
-            <span className="text-success">Ingredient</span> Manager
-          </h1>
-          <p className="text-muted fs-5">Manage your inventory with ease</p>
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-500 text-white flex items-center justify-center rounded-full mx-auto mb-3 shadow-md">
+            <i className="bi bi-box-seam text-2xl"></i>
+          </div>
+          <h1 className="text-2xl font-bold text-blue-600">Ingredient Manager</h1>
+          <p className="text-gray-500">Easily manage your store ingredients</p>
         </div>
 
-        {/* ADD / EDIT FORM */}
-        <div className="card border-0 shadow-sm mb-5">
-          <div className="card-header bg-white border-0 pt-4 pb-3">
-            <h4 className="mb-0 fw-semibold">
-              {editingId ? (
-                <><i className="bi bi-pencil-square text-warning me-2"></i>Edit Ingredient</>
-              ) : (
-                <><i className="bi bi-plus-circle text-success me-2"></i>Add New Ingredient</>
-              )}
-            </h4>
+        {/* Form */}
+        <div className="bg-white shadow-md rounded-lg p-6 mb-10">
+          <h2 className={`text-lg font-semibold mb-4 ${editingId ? "text-yellow-600" : "text-green-600"}`}>
+            {editingId ? "Edit Ingredient" : "Add New Ingredient"}
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <input
+              type="text"
+              placeholder="Ingredient Name"
+              className="border p-2 rounded w-full focus:ring focus:ring-blue-200"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="Category"
+              className="border p-2 rounded w-full focus:ring focus:ring-blue-200"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            />
+            <input
+              type="file"
+              className="border p-2 rounded w-full"
+              onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
+            />
           </div>
-          <div className="card-body p-4">
-            {/* Basic Info */}
-            <div className="row g-3 mb-4">
-              <div className="col-md-6">
-                <label className="form-label fw-semibold text-dark">Ingredient Name</label>
-                <input
-                  type="text"
-                  className="form-control form-control-lg border-2"
-                  placeholder="Enter ingredient name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-              </div>
-              <div className="col-md-6">
-                <label className="form-label fw-semibold text-dark">Category</label>
-                <input
-                  type="text"
-                  className="form-control form-control-lg border-2"
-                  placeholder="e.g., Dry Fruits, Spices"
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                />
-              </div>
-              <div className="col-12">
-                <label className="form-label fw-semibold text-dark">Image Upload</label>
-                <input
-                  type="file"
-                  className="form-control form-control-lg border-2"
-                  accept="image/*"
-                  onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
-                />
-              </div>
+
+          {/* Variants */}
+          <div className="bg-gray-100 p-4 rounded mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold text-gray-700">Variants</h3>
+              <span className="text-sm text-gray-500">{variants.length} total</span>
             </div>
 
-            {/* Variants Section */}
-            <div className="border-top pt-4 mt-4">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0 fw-semibold text-dark">
-                  <i className="bi bi-boxes text-primary me-2"></i>Product Variants
-                </h5>
-                <span className="badge bg-primary">{variants.length} variant{variants.length !== 1 ? 's' : ''}</span>
+            {variants.map((v, i) => (
+              <div key={i} className="bg-white border p-3 rounded mb-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <input
+                    type="text"
+                    placeholder="Quality"
+                    className="border p-2 rounded"
+                    value={v.quality}
+                    onChange={(e) => updateVariant(i, "quality", e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price per kg"
+                    className="border p-2 rounded"
+                    value={v.pricePerKg}
+                    onChange={(e) => updateVariant(i, "pricePerKg", e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Min Quantity"
+                    className="border p-2 rounded"
+                    value={v.minQuantity}
+                    onChange={(e) => updateVariant(i, "minQuantity", e.target.value)}
+                  />
+                  <select
+                    className="border p-2 rounded"
+                    value={v.unit}
+                    onChange={(e) => updateVariant(i, "unit", e.target.value)}
+                  >
+                    <option value="kg">kg</option>
+                    <option value="g">g</option>
+                  </select>
+                </div>
+                {variants.length > 1 && (
+                  <button
+                    onClick={() => removeVariant(i)}
+                    className="text-red-600 text-sm mt-2 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
+            ))}
 
-              {variants.map((v, i) => (
-                <div key={i} className="card mb-3 border-2">
-                  <div className="card-body p-3">
-                    <div className="row g-2 align-items-end">
-                      <div className="col-md-3">
-                        <label className="form-label small fw-semibold text-muted">Quality</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Standard/Premium"
-                          value={v.quality}
-                          onChange={(e) => updateVariant(i, 'quality', e.target.value)}
-                        />
-                      </div>
-                      <div className="col-md-3">
-                        <label className="form-label small fw-semibold text-muted">Price per kg (₹)</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          placeholder="100"
-                          value={v.pricePerKg}
-                          onChange={(e) => updateVariant(i, 'pricePerKg', e.target.value)}
-                        />
-                      </div>
-                      <div className="col-md-2">
-                        <label className="form-label small fw-semibold text-muted">Min Qty</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className="form-control"
-                          placeholder="0.25"
-                          value={v.minQuantity}
-                          onChange={(e) => updateVariant(i, 'minQuantity', e.target.value)}
-                        />
-                      </div>
-                      <div className="col-md-2">
-                        <label className="form-label small fw-semibold text-muted">Unit</label>
-                        <select
-                          className="form-select"
-                          value={v.unit}
-                          onChange={(e) => updateVariant(i, 'unit', e.target.value)}
-                        >
-                          <option value="kg">kg</option>
-                          <option value="g">g</option>
-                        </select>
-                      </div>
-                      <div className="col-md-2">
-                        <button
-                          type="button"
-                          className="btn btn-outline-danger w-100"
-                          onClick={() => removeVariant(i)}
-                          disabled={variants.length === 1}
-                        >
-                          <i className="bi bi-trash"></i> Remove
-                        </button>
-                      </div>
-                    </div>
+            <button
+              onClick={addVariant}
+              className="text-blue-600 text-sm font-medium hover:underline"
+            >
+              + Add Variant
+            </button>
+          </div>
+
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={handleSubmit}
+              className={`px-4 py-2 text-white rounded ${
+                editingId ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {editingId ? "Update Ingredient" : "Add Ingredient"}
+            </button>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ name: "", category: "", image: null });
+                  setVariants([{ quality: "Standard", pricePerKg: 100, minQuantity: 0.25, unit: "kg" }]);
+                }}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Ingredient List */}
+        <div className="bg-white shadow-md rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-blue-600">All Ingredients</h2>
+            <span className="text-sm text-gray-500">{ingredients.length} total</span>
+          </div>
+
+          {ingredients.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              <i className="bi bi-inbox text-3xl mb-2 block"></i>
+              No ingredients found
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {ingredients.map((ing) => (
+                <div key={ing._id} className="border rounded-lg shadow-sm hover:shadow-md transition p-3 bg-white">
+                  {ing.image && (
+                    <img
+                      src={ing.image}
+                      alt={ing.name}
+                      className="w-full h-40 object-cover rounded mb-3"
+                    />
+                  )}
+                  <h3 className="font-semibold text-blue-600">{ing.name}</h3>
+                  <p className="text-sm text-gray-500 mb-2">Category: {ing.category}</p>
+                  <p className="text-sm text-gray-400 mb-3">{ing.variants?.length || 0} variant(s)</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => editIngredient(ing)}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteIngredient(ing._id)}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
-
-              <button 
-                type="button" 
-                className="btn btn-outline-primary"
-                onClick={addVariant}
-              >
-                <i className="bi bi-plus-lg me-2"></i>Add Another Variant
-              </button>
             </div>
-
-            {/* Action Buttons */}
-            <div className="border-top pt-4 mt-4 d-flex gap-2 flex-wrap">
-              <button 
-                type="button"
-                className="btn btn-success btn-lg px-4"
-                onClick={handleSubmit}
-              >
-                <i className={`bi bi-${editingId ? 'check-circle' : 'plus-circle'} me-2`}></i>
-                {editingId ? 'Update' : 'Add'} Ingredient
-              </button>
-              {editingId && (
-                <button 
-                  type="button" 
-                  className="btn btn-outline-secondary btn-lg px-4"
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm({ name: '', category: '', image: null });
-                    setVariants([{ quality: 'Standard', pricePerKg: 100, minQuantity: 0.25, unit: 'kg' }]);
-                  }}
-                >
-                  <i className="bi bi-x-circle me-2"></i>Cancel
-                </button>
-              )}
-            </div>
-          </div>
+          )}
         </div>
-
-        {/* LIST OF INGREDIENTS */}
-        <div className="mb-4">
-          <div className="d-flex justify-content-between align-items-center">
-            <h3 className="fw-semibold text-dark mb-0">
-              <i className="bi bi-list-ul text-primary me-2"></i>All Ingredients
-            </h3>
-            <span className="badge bg-dark fs-6">{ingredients.length} total</span>
-          </div>
-          <hr className="my-3"/>
-        </div>
-
-        {ingredients.length === 0 ? (
-          <div className="text-center py-5">
-            <div className="text-muted">
-              <i className="bi bi-inbox" style={{fontSize: '4rem'}}></i>
-              <p className="mt-3 fs-5">No ingredients added yet</p>
-              <p className="text-muted">Start by adding your first ingredient above</p>
-            </div>
-          </div>
-        ) : (
-          <div className="row g-4">
-            {ingredients.map((ing) => (
-              <div key={ing._id} className="col-lg-4 col-md-6">
-                <div className="card h-100 border-0 shadow-sm hover-shadow transition">
-                  {ing.image && (
-                    <div className="position-relative overflow-hidden" style={{height: '220px'}}>
-                      <img 
-                        src={ing.image} 
-                        className="card-img-top w-100 h-100" 
-                        style={{objectFit: 'cover'}} 
-                        alt={ing.name} 
-                      />
-                      <div className="position-absolute top-0 end-0 m-2">
-                        <span className="badge bg-dark bg-opacity-75">{ing.category}</span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="card-body">
-                    <h5 className="card-title fw-bold text-dark mb-2">{ing.name}</h5>
-                    {!ing.image && <p className="text-muted small mb-2">{ing.category}</p>}
-                    <div className="d-flex align-items-center mb-3">
-                      <i className="bi bi-boxes text-primary me-2"></i>
-                      <span className="text-muted small">
-                        {ing.variants?.length || 0} variant{(ing.variants?.length || 0) !== 1 ? 's' : ''} available
-                      </span>
-                    </div>
-                    <div className="d-grid gap-2">
-                      <button 
-                        className="btn btn-outline-warning"
-                        onClick={() => editIngredient(ing)}
-                      >
-                        <i className="bi bi-pencil me-2"></i>Edit
-                      </button>
-                      <button 
-                        className="btn btn-outline-danger"
-                        onClick={() => deleteIngredient(ing._id)}
-                      >
-                        <i className="bi bi-trash me-2"></i>Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-
-      <style jsx>{`
-        .hover-shadow {
-          transition: all 0.3s ease;
-        }
-        .hover-shadow:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
-        }
-      `}</style>
     </div>
   );
 };
+
+
 
 // Order Details Component
 const OrderDetails = () => {
