@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send } from 'lucide-react';
+import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send, MapPin, SendHorizonalIcon } from 'lucide-react';
 import NotFound from './components/NotFound';
 // import { AlertCircle } from 'lucide-react';
 
@@ -11,9 +11,15 @@ const AdminDashboard = () => {
   const cards = [
     { title: 'Ingredients Control', icon: Package, color: 'from-pink-500 to-pink-600', path: '/ingredients', description: 'Add Sesame, Spices, Prices, Variants' },
     { title: 'Custom Mix Orders', icon: ShoppingCart, color: 'from-teal-500 to-teal-600', path: '/custom-orders', description: 'View & manage user-built mixes' },
-    { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, and manage your product inventory' },
-    { title: 'Reminders', icon: Package, color: 'from-blue-500 to-blue-600', path: '/send-emails', description: 'send emails to customers' },
-    { title: 'Manage Contacts', icon: MessageSquare, color: 'from-purple-500 to-purple-600', path: '/contacts', description: 'Review and manage customer inquiries' },
+    { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, your product inventory' },
+    { title: 'Reminders', icon: SendHorizonalIcon, color: 'from-blue-500 to-blue-600', path: '/send-emails', description: 'send emails to customers' },
+    { title: 'Manage Contacts', icon: MessageSquare, color: 'from-purple-500 to-purple-600', path: '/contacts', description: 'Review and manage inquiries' },
+    {
+      title: 'Distributors',
+      icon: MapPin, color: 'from-blue-500 to-blue-600',
+      path: '/distributors',
+      description: 'add distributors'
+    },
     { title: 'Manage Orders', icon: ShoppingCart, color: 'from-green-500 to-green-600', path: '/orders', description: 'Track, update, and manage orders' },
     { title: 'Manage Blogs', icon: Book, color: 'from-indigo-500 to-indigo-600', path: '/blogs', description: 'Create and manage blog posts' },
     { title: 'Analytics Dashboard', icon: BarChart3, color: 'from-orange-500 to-orange-600', path: '/analytics', description: 'View business insights and metrics' },
@@ -1712,56 +1718,56 @@ Team Dilkhush Kirana`
     setError(null);
   };
 
-const send = async () => {
-  if (!subject || !message) return alert('Fill subject & message');
+  const send = async () => {
+    if (!subject || !message) return alert('Fill subject & message');
 
-  setLoading(true);
-  setProgress({ sent: 0, failed: 0, pending: 0, total: 0, percentage: 0 });
+    setLoading(true);
+    setProgress({ sent: 0, failed: 0, pending: 0, total: 0, percentage: 0 });
 
-  try {
-    const response = await fetch(`${API}/admin/send-emails`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, subject, message })
-    });
+    try {
+      const response = await fetch(`${API}/admin/send-emails`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, subject, message })
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to start');
-    }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start');
+      }
 
-    // const { jobId } = await response.json();
+      // const { jobId } = await response.json();
 
-    // Poll for progress every 2 seconds
-    const poll = setInterval(async () => {
-      try {
-        const res = await fetch(`${API}/admin/send-emails/${jobId}`);
-        if (!res.ok) throw new Error('Poll failed');
-        const data = await res.json();
-        setProgress(data);
+      // Poll for progress every 2 seconds
+      const poll = setInterval(async () => {
+        try {
+          const res = await fetch(`${API}/admin/send-emails/${jobId}`);
+          if (!res.ok) throw new Error('Poll failed');
+          const data = await res.json();
+          setProgress(data);
 
-        if (data.status === 'completed' || data.status === 'failed') {
+          if (data.status === 'completed' || data.status === 'failed') {
+            clearInterval(poll);
+            setLoading(false);
+          }
+        } catch (err) {
           clearInterval(poll);
           setLoading(false);
+          alert('Polling error');
         }
-      } catch (err) {
+      }, 2000);
+
+      // Auto-stop after 5 minutes
+      setTimeout(() => {
         clearInterval(poll);
         setLoading(false);
-        alert('Polling error');
-      }
-    }, 2000);
+      }, 300000);
 
-    // Auto-stop after 5 minutes
-    setTimeout(() => {
-      clearInterval(poll);
+    } catch (err) {
       setLoading(false);
-    }, 300000);
-
-  } catch (err) {
-    setLoading(false);
-    alert(err.message);
-  }
-};
+      alert(err.message);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
@@ -2374,6 +2380,274 @@ const BlogDetails = () => {
   );
 };
 
+const ManageDistributors = () => {
+  const navigate = useNavigate();
+
+  const [distributors, setDistributors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    locationUrl: '',
+    city: '',
+    stock: '',
+    isActive: true,
+  });
+
+  // Fetch distributors
+  const fetchDistributors = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/admin/distributors`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      setDistributors(data);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDistributors();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((p) => ({
+      ...p,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('adminToken');
+    const url = editingId
+      ? `${API}/admin/distributors/${editingId}`
+      : `${API}/admin/distributors`;
+    const method = editingId ? 'PUT' : 'POST';
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...form,
+          stock: Number(form.stock),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed');
+      }
+
+      alert(editingId ? 'Updated!' : 'Added!');
+      resetForm();
+      setShowForm(false);
+      fetchDistributors();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const startEdit = (dist) => {
+    setForm({
+      name: dist.name || '',
+      phone: dist.phone || '',
+      locationUrl: dist.locationUrl || '',
+      city: dist.city || '',
+      stock: dist.stock?.toString() || '',
+      isActive: dist.isActive ?? true,
+    });
+    setEditingId(dist._id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this distributor?')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/admin/distributors/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      alert('Deleted!');
+      fetchDistributors();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      name: '',
+      phone: '',
+      locationUrl: '',
+      city: '',
+      stock: '',
+      isActive: true,
+    });
+    setEditingId(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/')} className="p-2 hover:bg-white rounded-lg">
+              <ArrowLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Distributors</h1>
+              <p className="text-gray-600">Manage stock & locations</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white px-6 py-3 rounded-xl hover:shadow-lg"
+          >
+            {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            {showForm ? 'Cancel' : 'Add Distributor'}
+          </button>
+        </div>
+
+        {/* Form */}
+        {showForm && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-6">
+              {editingId ? 'Edit' : 'Add'} Distributor
+            </h2>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <input name="name" placeholder="Name *" value={form.name} onChange={handleChange} required className="input" />
+              <input name="phone" placeholder="Phone *" value={form.phone} onChange={handleChange} required className="input" />
+              <input name="city" placeholder="City *" value={form.city} onChange={handleChange} required className="input" />
+              <input name="stock" type="number" min="0" placeholder="Stock (units) *" value={form.stock} onChange={handleChange} required className="input" />
+
+              <input
+                name="locationUrl"
+                placeholder="Google Maps URL *"
+                value={form.locationUrl}
+                onChange={handleChange}
+                required
+                className="md:col-span-2 input"
+              />
+
+              <label className="md:col-span-2 flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={form.isActive}
+                  onChange={handleChange}
+                  className="w-5 h-5 text-teal-600 rounded focus:ring-teal-500"
+                />
+                <span className="text-gray-700 font-medium">Active (Visible on website)</span>
+              </label>
+
+              <div className="md:col-span-2 flex gap-4">
+                <button type="submit" className="flex-1 bg-teal-600 text-white py-3 rounded-xl hover:bg-teal-700 font-semibold">
+                  {editingId ? 'Update' : 'Add'}
+                </button>
+                <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="px-6 py-3 bg-gray-200 rounded-xl hover:bg-gray-300 font-semibold">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* List */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500 mx-auto"></div>
+            </div>
+          ) : distributors.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">No distributors yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Contact</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">City</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Stock</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {distributors.map((d) => (
+                    <tr key={d._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-gray-900">{d.name}</td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {d.phone}
+                        <br />
+                        <a href={d.locationUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-600 hover:underline flex items-center gap-1 mt-1">
+                          <MapPin className="w-3 h-3" /> View Map
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{d.city}</td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1">
+                          <Package className="w-4 h-4 text-gray-500" />
+                          {d.stock}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${d.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                          }`}>
+                          {d.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button onClick={() => startEdit(d)} className="p-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(d._id)} className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .input {
+          @apply px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+
 // View Contacts Component (unchanged)
 const ViewContacts = () => {
   const navigate = useNavigate();
@@ -2578,6 +2852,7 @@ function App() {
           <Route path="contacts" element={<ManageContacts />} />
           <Route path="orders" element={<ManageOrders />} />
           <Route path="orders/:id" element={<OrderDetails />} />
+          <Route path="distributors" element={<ManageDistributors />} />
           <Route path="blogs" element={<ManageBlogs />} />
           <Route path="ingredients" element={<ManageIngredients />} />
           <Route path="custom-orders" element={<CustomMixOrders />} />
