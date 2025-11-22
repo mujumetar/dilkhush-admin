@@ -1690,24 +1690,153 @@ const SendEmails = () => {
   const templates = {
     'payment-pending': {
       subject: 'Complete Your Payment – Order #{orderId}',
-      message: `Hi {name},
-Your order <strong>#{orderId}</strong> of <strong>₹{total}</strong> is pending payment.
-Please complete payment to confirm your order.
-<a href="{trackUrl}" style="background:#d32f2f;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:bold;">
-  Complete Payment Now
-</a>
-Ignore if already paid.
-Thank you!
-Dilkhush Kirana Team`
+      message:`  <body style="margin:0; padding:0; background:#eceff1; font-family: 'Segoe UI', Arial, sans-serif;">
+
+    <!-- MAIN WRAPPER -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0; background:#eceff1;">
+      <tr>
+        <td align="center">
+
+          <!-- CARD -->
+          <table width="600" cellpadding="0" cellspacing="0" 
+                 style="background:#ffffff; border-radius:12px; overflow:hidden;
+                 box-shadow:0 4px 18px rgba(0,0,0,0.1); text-align:center;">
+
+            <!-- HEADER -->
+            <tr>
+              <td style="background:#d32f2f; padding:25px 0;">
+                <h1 style="margin:0; font-size:26px; color:#ffffff;">Payment Pending</h1>
+              </td>
+            </tr>
+
+            <!-- CONTENT -->
+            <tr>
+              <td style="padding:30px; text-align:left;">
+                <p style="font-size:18px; color:#333; margin:0 0 15px;">
+                  Hi <strong>{name}</strong>,
+                </p>
+
+                <p style="font-size:16px; color:#555; line-height:1.6; margin:0 0 20px;">
+                  Your order <strong style="color:#d32f2f;">#{orderId}</strong> with a total amount of 
+                  <strong style="color:#000;">{total}</strong> is still awaiting payment.
+                  <br /><br />
+                  Please complete your payment to confirm your order and continue processing.
+                </p>
+
+                <!-- ORDER INFO BOX -->
+                <div style="background:#fbe9e7; border-left:4px solid #d84315; padding:15px 18px; border-radius:8px; margin-bottom:25px;">
+                  <p style="margin:0; font-size:15px; color:#5d4037;">This order will be placed only after the payment is completed.</p>
+                </div>
+
+                <!-- BUTTON -->
+                <div style="text-align:center; margin:35px 0;">
+                  <a href="{trackUrl}" 
+                    style="background:#d32f2f; color:#ffffff; padding:15px 40px; font-size:18px; 
+                    text-decoration:none; font-weight:bold; border-radius:50px; display:inline-block;
+                    box-shadow:0 6px 16px rgba(211,47,47,0.4);">
+                    Complete Payment
+                  </a>
+                </div>
+
+                <p style="font-size:14px; color:#777; margin-top:30px;">
+                  Ignore this message if payment is already made.
+                </p>
+
+                <p style="font-size:16px; font-weight:bold; color:#333; margin-top:10px;">
+                  Dilkhush Kirana Team
+                </p>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td style="background:#fafafa; padding:20px; text-align:center; font-size:13px; color:#888;">
+                © 2025 Dilkhush Kirana Store | Dhasa, Gujarat
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+
+  </body>`
     },
     'all-customers': {
       subject: 'Special Offer Just for You, {name}!',
-      message: `Hello {name},
-We're excited to bring you fresh spices, grains & more at unbeatable prices!
-Visit us: <a href="https://dilkhush.shop">dilkhush.shop</a>
-Use code <strong>WELCOME10</strong> for 10% off your next order!
-Best regards,
-Team Dilkhush Kirana`
+      message: `<body style="margin:0; padding:0; background:#f3f4f6; font-family:'Segoe UI',Arial,sans-serif;">
+
+  <!-- main wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- card -->
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#fff; border-radius:14px; overflow:hidden;
+               box-shadow:0 6px 20px rgba(0,0,0,0.10);">
+
+          <!-- header -->
+          <tr>
+            <td style="background:#d32f2f; padding:28px; text-align:center;">
+              <h1 style="color:#fff; margin:0; font-size:28px; letter-spacing:1px;">
+                Welcome to Dilkhush Kirana
+              </h1>
+            </td>
+          </tr>
+
+          <!-- content -->
+          <tr>
+            <td style="padding:35px; text-align:left;">
+
+              <p style="margin:0 0 15px; font-size:18px; color:#333;">
+                Hello <strong>{name}</strong>,
+              </p>
+
+              <p style="margin:0 0 20px; font-size:16px; line-height:1.6; color:#555;">
+                We're excited to bring you <strong>fresh spices, grains & daily essentials</strong> 
+                at unbeatable prices! Shop with us and enjoy the Dilkhush experience. 🌿
+              </p>
+
+              <!-- Highlight offer box -->
+              <div style="background:#fff3e0; border-left:6px solid #ef6c00; 
+                          padding:18px 22px; border-radius:10px; margin-bottom:30px;">
+                <p style="margin:0; font-size:16px; color:#5d4037;">
+                  Use code <strong style="font-size:18px; color:#d84315;">WELCOME10</strong> 
+                  for <strong>10% OFF</strong> on your next order!
+                </p>
+              </div>
+
+              <!-- button -->
+              <div style="text-align:center; margin:32px 0;">
+                <a href="https://dilkhush.shop"
+                  style="background:#d32f2f; color:#fff; padding:15px 42px; font-size:18px;
+                  text-decoration:none; font-weight:bold; border-radius:50px; display:inline-block;
+                  box-shadow:0 6px 15px rgba(211,47,47,0.45);">
+                  Shop Now
+                </a>
+              </div>
+
+              <p style="font-size:15px; color:#777; margin-top:10px;">
+                Best regards,<br />
+                <strong>Team Dilkhush Kirana</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- footer -->
+          <tr>
+            <td style="background:#fafafa; padding:18px; text-align:center; font-size:13px; color:#888;">
+              © 2025 Dilkhush Kirana Store · Dhasa, Gujarat
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>`
     }
   };
 
@@ -2613,8 +2742,8 @@ const ManageDistributors = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${d.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
                           }`}>
                           {d.isActive ? 'Active' : 'Inactive'}
                         </span>
