@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send, MapPin, SendHorizonalIcon } from 'lucide-react';
+import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send, MapPin, SendHorizonalIcon, RefreshCw, XCircle, CheckCircle2, Gift, Percent, IndianRupee, Calendar } from 'lucide-react';
 import NotFound from './components/NotFound';
+import axios from 'axios';
 // import { AlertCircle } from 'lucide-react';
 
 // Admin Dashboard Component
@@ -14,6 +15,14 @@ const AdminDashboard = () => {
     { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, your product inventory' },
     { title: 'Reminders', icon: SendHorizonalIcon, color: 'from-blue-500 to-blue-600', path: '/send-emails', description: 'send emails to customers' },
     { title: 'Manage Contacts', icon: MessageSquare, color: 'from-purple-500 to-purple-600', path: '/contacts', description: 'Review and manage inquiries' },
+    // Inside the cards array in AdminDashboard component, add this:
+    {
+      title: 'Coupon Codes',
+      icon: Gift,                     // ← add this import at the top
+      color: 'from-pink-500 to-pink-600',
+      path: '/coupons',
+      description: 'Create & manage discount coupons'
+    },
     {
       title: 'Distributors',
       icon: MapPin, color: 'from-blue-500 to-blue-600',
@@ -832,7 +841,7 @@ const CustomMixOrders = () => {
 };
 // Manage Orders Component
 const ManageOrders = () => {
-  const navigate = useNavigate();
+ const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [formData, setFormData] = useState({
@@ -854,6 +863,7 @@ const ManageOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // FETCH FROM YOUR REAL API
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -864,44 +874,63 @@ const ManageOrders = () => {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch orders');
-      }
-      const data = await response.json();
-      setOrders(data);
-      setFilteredOrders(data);
+
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      let data = await response.json();
+
+      // MAP & NORMALIZE DATA (this is the only new part)
+      const normalizedOrders = data.map(order => ({
+        ...order,
+        // Capitalize status (your API returns "pending", "Shipped", etc.)
+        status: order.status 
+          ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase() 
+          : 'Pending',
+
+        // Auto-detect payment status if missing
+        paymentStatus: order.paymentStatus 
+          ? order.paymentStatus 
+          : order.razorpayPaymentId 
+            ? 'Paid' 
+            : 'Pending',
+      }));
+
+      setOrders(normalizedOrders);
+      setFilteredOrders(normalizedOrders);
       setLoading(false);
     } catch (err) {
-      console.error('Fetch orders error:', err);
+      console.error('Fetch error:', err);
       setError(err.message);
       setLoading(false);
     }
   };
 
+  // FILTERING & SORTING (unchanged)
   useEffect(() => {
     let filtered = [...orders];
+
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (order) =>
-          order.customerName.toLowerCase().includes(lower) ||
-          order.customerEmail.toLowerCase().includes(lower) ||
-          order._id.toLowerCase().includes(lower)
+      filtered = filtered.filter(order =>
+        order.customerName?.toLowerCase().includes(lower) ||
+        order.customerEmail?.toLowerCase().includes(lower) ||
+        order._id?.toLowerCase().includes(lower)
       );
     }
+
     if (statusFilter !== 'All') {
-      filtered = filtered.filter((order) => order.status === statusFilter);
+      filtered = filtered.filter(order => order.status === statusFilter);
     }
-    if (sortOption === 'newest') {
+
+    if (sortOption === 'newest')
       filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    } else if (sortOption === 'oldest') {
+    else if (sortOption === 'oldest')
       filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    } else if (sortOption === 'amountHigh') {
+    else if (sortOption === 'amountHigh')
       filtered.sort((a, b) => b.totalAmount - a.totalAmount);
-    } else if (sortOption === 'amountLow') {
+    else if (sortOption === 'amountLow')
       filtered.sort((a, b) => a.totalAmount - b.totalAmount);
-    }
+
     setFilteredOrders(filtered);
   }, [searchTerm, sortOption, statusFilter, orders]);
 
@@ -909,51 +938,55 @@ const ManageOrders = () => {
     const { name, value } = e.target;
     if (name.includes('Address.')) {
       const [type, field] = name.split('.');
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         [type]: { ...prev[type], [field]: value },
       }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
     try {
       const token = localStorage.getItem('adminToken');
-      const url = editingId ? `${import.meta.env.VITE_API_URL}/admin/orders/${editingId}` : `${import.meta.env.VITE_API_URL}/admin/orders`;
-      const method = editingId ? 'PUT' : 'POST';
+      const url = editingId
+        ? `${import.meta.env.VITE_API_URL}/admin/orders/${editingId}`
+        : `${import.meta.env.VITE_API_URL}/admin/orders`;
+
       const response = await fetch(url, {
-        method,
+        method: editingId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${editingId ? 'update' : 'add'} order`);
+        const err = await response.json();
+        throw new Error(err.error || 'Operation failed');
       }
-      await fetchOrders();
+
+      await fetchOrders(); // Refresh from server
       resetForm();
       setShowForm(false);
     } catch (err) {
-      console.error('Submit order error:', err);
       setError(err.message);
     }
   };
 
   const handleEdit = (order) => {
     setFormData({
-      customerName: order.customerName,
-      customerEmail: order.customerEmail,
-      customerPhone: order.customerPhone,
-      totalAmount: order.totalAmount,
-      status: order.status,
-      paymentStatus: order.paymentStatus,
+      customerName: order.customerName || '',
+      customerEmail: order.customerEmail || '',
+      customerPhone: order.customerPhone || '',
+      totalAmount: order.totalAmount || 0,
+      status: order.status || 'Pending',
+      paymentStatus: order.paymentStatus || 'Pending',
       shippingAddress: order.shippingAddress || { street: '', city: '', state: '', zip: '', country: '' },
       billingAddress: order.billingAddress || { street: '', city: '', state: '', zip: '', country: '' },
       notes: order.notes || '',
@@ -963,23 +996,18 @@ const ManageOrders = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    if (!window.confirm('Delete this order permanently?')) return;
+
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/orders/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete order');
-      }
+
+      if (!response.ok) throw new Error('Delete failed');
       await fetchOrders();
     } catch (err) {
-      console.error('Delete order error:', err);
       setError(err.message);
     }
   };
@@ -1000,24 +1028,25 @@ const ManageOrders = () => {
   };
 
   const getStatusColor = (status) => {
-    const colors = {
+    const map = {
       Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       Processing: 'bg-blue-100 text-blue-700 border-blue-200',
       Shipped: 'bg-purple-100 text-purple-700 border-purple-200',
       Delivered: 'bg-green-100 text-green-700 border-green-200',
       Cancelled: 'bg-red-100 text-red-700 border-red-200',
     };
-    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
   const getPaymentStatusColor = (status) => {
-    return status === 'Paid' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
+    return status === 'Paid'
+      ? 'bg-green-100 text-green-700 border-green-200'
+      : 'bg-red-100 text-red-700 border-red-200';
   };
 
   const handleViewDetails = (order) => {
     navigate(`/orders/${order._id}`, { state: order });
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -1679,302 +1708,212 @@ const ManageIngredients = () => {
 
 const API = import.meta.env.VITE_API_URL;
 
+
 const SendEmails = () => {
-  const [type, setType] = useState('payment-pending');
+  const [type, setType] = useState('all-customers');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [progress, setProgress] = useState(null);
+  const [currentEmail, setCurrentEmail] = useState(''); // ← LIVE "sending to xyz@gmail.com"
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const evtSourceRef = useRef(null);
 
   const templates = {
-    'payment-pending': {
-      subject: 'Complete Your Payment – Order #{orderId}',
-      message:`  <body style="margin:0; padding:0; background:#eceff1; font-family: 'Segoe UI', Arial, sans-serif;">
-
-    <!-- MAIN WRAPPER -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0; background:#eceff1;">
-      <tr>
-        <td align="center">
-
-          <!-- CARD -->
-          <table width="600" cellpadding="0" cellspacing="0" 
-                 style="background:#ffffff; border-radius:12px; overflow:hidden;
-                 box-shadow:0 4px 18px rgba(0,0,0,0.1); text-align:center;">
-
-            <!-- HEADER -->
-            <tr>
-              <td style="background:#d32f2f; padding:25px 0;">
-                <h1 style="margin:0; font-size:26px; color:#ffffff;">Payment Pending</h1>
-              </td>
-            </tr>
-
-            <!-- CONTENT -->
-            <tr>
-              <td style="padding:30px; text-align:left;">
-                <p style="font-size:18px; color:#333; margin:0 0 15px;">
-                  Hi <strong>{name}</strong>,
-                </p>
-
-                <p style="font-size:16px; color:#555; line-height:1.6; margin:0 0 20px;">
-                  Your order <strong style="color:#d32f2f;">#{orderId}</strong> with a total amount of 
-                  <strong style="color:#000;">{total}</strong> is still awaiting payment.
-                  <br /><br />
-                  Please complete your payment to confirm your order and continue processing.
-                </p>
-
-                <!-- ORDER INFO BOX -->
-                <div style="background:#fbe9e7; border-left:4px solid #d84315; padding:15px 18px; border-radius:8px; margin-bottom:25px;">
-                  <p style="margin:0; font-size:15px; color:#5d4037;">This order will be placed only after the payment is completed.</p>
-                </div>
-
-                <!-- BUTTON -->
-                <div style="text-align:center; margin:35px 0;">
-                  <a href="{trackUrl}" 
-                    style="background:#d32f2f; color:#ffffff; padding:15px 40px; font-size:18px; 
-                    text-decoration:none; font-weight:bold; border-radius:50px; display:inline-block;
-                    box-shadow:0 6px 16px rgba(211,47,47,0.4);">
-                    Complete Payment
-                  </a>
-                </div>
-
-                <p style="font-size:14px; color:#777; margin-top:30px;">
-                  Ignore this message if payment is already made.
-                </p>
-
-                <p style="font-size:16px; font-weight:bold; color:#333; margin-top:10px;">
-                  Dilkhush Kirana Team
-                </p>
-              </td>
-            </tr>
-
-            <!-- FOOTER -->
-            <tr>
-              <td style="background:#fafafa; padding:20px; text-align:center; font-size:13px; color:#888;">
-                © 2025 Dilkhush Kirana Store | Dhasa, Gujarat
-              </td>
-            </tr>
-
-          </table>
-        </td>
-      </tr>
-    </table>
-
-  </body>`
-    },
-    'all-customers': {
-      subject: 'Special Offer Just for You, {name}!',
-      message: `<body style="margin:0; padding:0; background:#f3f4f6; font-family:'Segoe UI',Arial,sans-serif;">
-
-  <!-- main wrapper -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
-    <tr>
-      <td align="center">
-
-        <!-- card -->
-        <table width="600" cellpadding="0" cellspacing="0"
-               style="background:#fff; border-radius:14px; overflow:hidden;
-               box-shadow:0 6px 20px rgba(0,0,0,0.10);">
-
-          <!-- header -->
-          <tr>
-            <td style="background:#d32f2f; padding:28px; text-align:center;">
-              <h1 style="color:#fff; margin:0; font-size:28px; letter-spacing:1px;">
-                Welcome to Dilkhush Kirana
-              </h1>
-            </td>
-          </tr>
-
-          <!-- content -->
-          <tr>
-            <td style="padding:35px; text-align:left;">
-
-              <p style="margin:0 0 15px; font-size:18px; color:#333;">
-                Hello <strong>{name}</strong>,
-              </p>
-
-              <p style="margin:0 0 20px; font-size:16px; line-height:1.6; color:#555;">
-                We're excited to bring you <strong>fresh spices, grains & daily essentials</strong> 
-                at unbeatable prices! Shop with us and enjoy the Dilkhush experience. 🌿
-              </p>
-
-              <!-- Highlight offer box -->
-              <div style="background:#fff3e0; border-left:6px solid #ef6c00; 
-                          padding:18px 22px; border-radius:10px; margin-bottom:30px;">
-                <p style="margin:0; font-size:16px; color:#5d4037;">
-                  Use code <strong style="font-size:18px; color:#d84315;">WELCOME10</strong> 
-                  for <strong>10% OFF</strong> on your next order!
-                </p>
-              </div>
-
-              <!-- button -->
-              <div style="text-align:center; margin:32px 0;">
-                <a href="https://dilkhush.shop"
-                  style="background:#d32f2f; color:#fff; padding:15px 42px; font-size:18px;
-                  text-decoration:none; font-weight:bold; border-radius:50px; display:inline-block;
-                  box-shadow:0 6px 15px rgba(211,47,47,0.45);">
-                  Shop Now
-                </a>
-              </div>
-
-              <p style="font-size:15px; color:#777; margin-top:10px;">
-                Best regards,<br />
-                <strong>Team Dilkhush Kirana</strong>
-              </p>
-            </td>
-          </tr>
-
-          <!-- footer -->
-          <tr>
-            <td style="background:#fafafa; padding:18px; text-align:center; font-size:13px; color:#888;">
-              © 2025 Dilkhush Kirana Store · Dhasa, Gujarat
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-
-</body>`
-    }
+    'payment-pending': { subject: 'Payment Pending - Complete Order #{orderId}', message: `Hi {name},\n\nYour order #{orderId} (₹{total}) is pending payment.\n\nComplete it here: {trackUrl}\n\nThanks,\nDilkhush Kirana` },
+    'all-customers': { subject: 'Special 10% OFF for You, {name}!', message: `Hello {name},\n\nWe're giving you 10% OFF on your next order!\nUse code: WELCOME10\n\nShop now: https://dilkhush.shop\n\nTeam Dilkhush Kirana ❤️` }
   };
 
   const handleTypeChange = (t) => {
     setType(t);
     setSubject(templates[t].subject);
     setMessage(templates[t].message);
-    setError(null);
   };
 
   const send = async () => {
-    if (!subject || !message) return alert('Fill subject & message');
+    if (!subject.trim() || !message.trim()) return alert('Subject aur message daal bhai!');
 
     setLoading(true);
-    setProgress({ sent: 0, failed: 0, pending: 0, total: 0, percentage: 0 });
+    setProgress(null);
+    setCurrentEmail('');
 
+    if (evtSourceRef.current) evtSourceRef.current.close();
+
+    const evtSource = new EventSource(`${API}/admin/send-emails`);
+    evtSourceRef.current = evtSource;
+
+    evtSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+
+        if (data.currentEmail) setCurrentEmail(data.currentEmail);
+        setProgress(data);
+
+        if (data.done || data.status === 'completed') {
+          evtSource.close();
+          setLoading(false);
+        }
+      } catch (err) {
+        // heartbeat ignore
+      }
+    };
+
+    evtSource.onerror = () => {
+      evtSource.close();
+      setLoading(false);
+      setCurrentEmail('');
+      alert('Connection lost → but emails are still being sent in background!');
+    };
+
+    // Trigger sending
     try {
-      const response = await fetch(`${API}/admin/send-emails`, {
+      const res = await fetch(`${API}/admin/send-emails`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, subject, message })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start');
-      }
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
 
-      // const { jobId } = await response.json();
-
-      // Poll for progress every 2 seconds
-      const poll = setInterval(async () => {
-        try {
-          const res = await fetch(`${API}/admin/send-emails/${jobId}`);
-          if (!res.ok) throw new Error('Poll failed');
-          const data = await res.json();
-          setProgress(data);
-
-          if (data.status === 'completed' || data.status === 'failed') {
-            clearInterval(poll);
-            setLoading(false);
-          }
-        } catch (err) {
-          clearInterval(poll);
-          setLoading(false);
-          alert('Polling error');
-        }
-      }, 2000);
-
-      // Auto-stop after 5 minutes
-      setTimeout(() => {
-        clearInterval(poll);
-        setLoading(false);
-      }, 300000);
+      setProgress({ sent: 0, failed: 0, pending: 0, total: 1, percentage: 0, message: "Starting..." });
 
     } catch (err) {
+      evtSource.close();
       setLoading(false);
-      alert(err.message);
+      alert('Error: ' + err.message);
     }
   };
 
+  useEffect(() => {
+    return () => evtSourceRef.current?.close();
+  }, []);
+  // Polling se live progress milega (Vercel safe!)
+  useEffect(() => {
+    if (!loading) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API}/admin/email-progress`);
+        const data = await res.json();
+
+        setProgress(data);
+        setCurrentEmail(data.currentEmail || '');
+
+        if (data.done || data.status === 'completed') {
+          clearInterval(interval);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.log("Progress check failed, retrying...");
+      }
+    }, 2000); // Har 2 sec me update
+
+    return () => clearInterval(interval);
+  }, [loading]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-            <MailCheck className="w-10 h-10 text-teal-600" />
-            Send Bulk Emails
-          </h1>
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-2xl p-10">
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              {error}
-            </div>
-          )}
+          <div className="flex items-center gap-4 mb-10">
+            <MailCheck className="w-12 h-12 text-teal-600" />
+            <h1 className="text-4xl font-bold text-gray-900">Bulk Email Blaster</h1>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <button
-              onClick={() => handleTypeChange('payment-pending')}
-              className={`p-6 rounded-xl border-2 transition-all ${type === 'payment-pending' ? 'border-teal-500 bg-teal-50' : 'border-gray-200'}`}
-            >
-              <AlertCircle className="w-10 h-10 text-red-600 mb-3" />
-              <h3 className="font-bold">Payment Pending Reminders</h3>
-              <p className="text-sm text-gray-600 mt-1">Auto-send to unpaid orders</p>
+            <button onClick={() => handleTypeChange('payment-pending')}
+              className={`p-8 rounded-2xl border-3 transition-all ${type === 'payment-pending' ? 'border-red-500 bg-red-50 shadow-lg' : 'border-gray-300'}`}>
+              <AlertCircle className="w-14 h-14 text-red-600 mb-4" />
+              <h3 className="text-2xl font-bold">Payment Pending</h3>
             </button>
-            <button
-              onClick={() => handleTypeChange('all-customers')}
-              className={`p-6 rounded-xl border-2 transition-all ${type === 'all-customers' ? 'border-teal-500 bg-teal-50' : 'border-gray-200'}`}
-            >
-              <Users2 className="w-10 h-10 text-blue-600 mb-3" />
-              <h3 className="font-bold">All Customers</h3>
-              <p className="text-sm text-gray-600 mt-1">Marketing & announcements</p>
+            <button onClick={() => handleTypeChange('all-customers')}
+              className={`p-8 rounded-2xl border-3 transition-all ${type === 'all-customers' ? 'border-teal-500 bg-teal-50 shadow-lg' : 'border-gray-300'}`}>
+              <Users2 className="w-14 h-14 text-blue-600 mb-4" />
+              <h3 className="text-2xl font-bold">All Customers</h3>
             </button>
           </div>
 
-          <div className="space-y-6">
-            <input
-              type="text"
-              placeholder="Email Subject"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              className="w-full px-5 py-4 text-lg border rounded-xl focus:ring-4 focus:ring-teal-200"
-              disabled={loading}
-            />
-            <textarea
-              rows="12"
-              placeholder="Email body (use {name}, {orderId}, {total}, {trackUrl})"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              className="w-full px-5 py-4 border rounded-xl font-mono text-sm focus:ring-4 focus:ring-teal-200"
-              disabled={loading}
-            />
-            <button
-              onClick={send}
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-teal-500 to-teal-600 text-white py-5 rounded-xl text-xl font-bold hover:shadow-xl disabled:opacity-70 flex items-center justify-center gap-3"
-            >
-              <Send className="w-7 h-7" />
-              {loading ? 'Sending Emails...' : 'Send to All Recipients'}
-            </button>
+          <input
+            type="text" placeholder="Subject Line" value={subject} onChange={e => setSubject(e.target.value)}
+            className="w-full px-6 py-5 text-xl border-2 rounded-2xl mb-6 focus:ring-4 focus:ring-teal-300"
+            disabled={loading}
+          />
 
-            {progress && (
-              <div className="mt-8 p-8 bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl border-2 border-teal-200">
-                <h3 className="text-2xl font-bold mb-4">Sending Progress</h3>
-                <div className="text-5xl font-bold text-teal-700 mb-4">{progress.percentage}%</div>
-                <div className="w-full bg-gray-300 rounded-full h-12 overflow-hidden mb-6">
-                  <div style={{ width: `${progress.percentage}%` }} className="h-full bg-gradient-to-r from-teal-500 to-blue-600"></div>
+          <textarea
+            rows="10" placeholder="Email body → use {name}, {orderId}, {total}, {trackUrl}"
+            value={message} onChange={e => setMessage(e.target.value)}
+            className="w-full px-6 py-5 border-2 rounded-2xl font-mono text-base mb-8 focus:ring-4 focus:ring-teal-300"
+            disabled={loading}
+          />
+
+          <button
+            onClick={send} disabled={loading}
+            className="w-full bg-gradient-to-r from-teal-600 to-blue-700 text-white py-6 rounded-2xl text-3xl font-bold hover:shadow-2xl disabled:opacity-60 flex items-center justify-center gap-5"
+          >
+            {loading ? <RefreshCw className="w-10 h-10 animate-spin" /> : <Send className="w-10 h-10" />}
+            {loading ? 'Blasting Emails...' : 'SEND TO EVERYONE NOW'}
+          </button>
+
+          {/* LIVE TRACKING DASHBOARD */}
+          {progress && (
+            <div className="mt-12 p-10 bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50 rounded-3xl border-4 border-teal-200">
+
+              {currentEmail && (
+                <div className="text-center mb-8">
+                  <p className="text-2xl font-bold text-gray-800 animate-pulse">
+                    Sending to → <span className="text-teal-700">{currentEmail}</span>
+                  </p>
                 </div>
-                <div className="grid grid-cols-3 gap-6 text-center">
-                  <div className="text-green-600"><div className="text-4xl font-bold">{progress.sent}</div><div>Sent</div></div>
-                  <div className="text-yellow-600"><div className="text-4xl font-bold">{progress.pending}</div><div>Pending</div></div>
-                  <div className="text-red-600"><div className="text-4xl font-bold">{progress.failed}</div><div>Failed</div></div>
+              )}
+
+              <div className="text-center mb-8">
+                <div className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-700">
+                  {progress.percentage || 0}%
                 </div>
-                {progress.done && <p className="mt-6 text-center text-xl font-bold text-green-700">{progress.message}</p>}
               </div>
-            )}
-          </div>
+
+              <div className="w-full bg-gray-300 rounded-full h-16 mb-10 overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-500 via-blue-500 to-purple-600 transition-all duration-1000 flex items-center justify-end pr-6"
+                  style={{ width: `${progress.percentage || 0}%` }}
+                >
+                  <span className="text-white text-2xl font-bold drop-shadow-lg">
+                    {progress.sent || 0} / {progress.total || 0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-8 text-center">
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-3" />
+                  <div className="text-5xl font-bold text-green-600">{progress.sent || 0}</div>
+                  <div className="text-gray-600 text-lg">Delivered</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <RefreshCw className="w-16 h-16 text-yellow-600 mx-auto mb-3 animate-spin" />
+                  <div className="text-5xl font-bold text-yellow-600">{progress.pending || 0}</div>
+                  <div className="text-gray-600 text-lg">In Queue</div>
+                </div>
+                <div className="bg-white rounded-2xl p-6 shadow-xl">
+                  <XCircle className="w-16 h-16 text-red-600 mx-auto mb-3" />
+                  <div className="text-5xl font-bold text-red-600">{progress.failed || 0}</div>
+                  <div className="text-gray-600 text-lg">Failed</div>
+                </div>
+              </div>
+
+              {progress.done && (
+                <div className="text-center mt-10">
+                  <p className="text-4xl font-bold text-green-700 animate-bounce">
+                    ALL EMAILS SENT SUCCESSFULLY!
+                  </p>
+                  {progress.failed > 0 && (
+                    <p className="text-xl text-red-600 mt-4">
+                      {progress.failed} emails failed → check logs
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -2969,6 +2908,299 @@ const AnalyticsDashboard = () => {
   );
 };
 
+const ManageCoupons = () => {
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const emptyForm = {
+    code: "",
+    type: "percentage",
+    value: "",
+    minAmount: "",
+    maxDiscount: "",
+    usageLimit: "",
+    perUserLimit: "1",
+    expiresAt: "",
+    isActive: true,
+  };
+
+  const [form, setForm] = useState(emptyForm);
+
+  // Fetch all coupons
+  const fetchCoupons = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/coupons`);
+      setCoupons(res.data);
+    } catch (err) {
+      alert("Coupons load nahi hue, server check kar!");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+    setIsAdding(false);
+  };
+
+  const startAdd = () => {
+    resetForm();
+    setIsAdding(true);
+  };
+
+  const startEdit = (coupon) => {
+    setForm({
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      minAmount: coupon.minAmount || "",
+      maxDiscount: coupon.maxDiscount || "",
+      usageLimit: coupon.usageLimit || "",
+      perUserLimit: coupon.perUserLimit || "1",
+      expiresAt: coupon.expiresAt ? coupon.expiresAt.split("T")[0] : "",
+      isActive: coupon.isActive,
+    });
+    setEditingId(coupon._id);
+    setIsAdding(true);
+  };
+
+  // Save Coupon (ADD or UPDATE)
+  const saveCoupon = async () => {
+    if (!form.code || !form.value) {
+      alert("Code aur value daal!");
+      return;
+    }
+
+    // convert all numbers properly
+    const payload = {
+      ...form,
+      value: Number(form.value),
+      minAmount: Number(form.minAmount),
+      maxDiscount: form.type === "percentage" ? Number(form.maxDiscount) : null,
+      usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+      perUserLimit: Number(form.perUserLimit),
+      expiresAt: form.expiresAt ? new Date(form.expiresAt) : null,
+    };
+
+    try {
+      if (editingId) {
+        await axios.put(`${API}/admin/coupons/${editingId}`, payload);
+        alert("Coupon update ho gaya");
+      } else {
+        await axios.post(`${API}/admin/coupons`, payload); // FIXED: missing ${API}
+        alert("Naya coupon ban gaya");
+      }
+
+      resetForm();
+      fetchCoupons();
+    } catch (err) {
+      alert(err.response?.data?.error || "Error aa gaya!");
+    }
+  };
+
+  const deleteCoupon = async (id) => {
+    if (!window.confirm("Delete karna pakka?")) return;
+    try {
+      await axios.delete(`${API}/admin/coupons/${id}`);
+      setCoupons(coupons.filter((c) => c._id !== id));
+      alert("Delete ho gaya");
+    } catch {
+      alert("Delete nahi hua");
+    }
+  };
+
+  if (loading)
+    return <div className="p-8 text-center text-2xl">Loading coupons...</div>;
+
+  return (
+    <div className="p-8 max-w-5xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Manage Coupons</h1>
+        <button
+          onClick={startAdd}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold text-lg"
+        >
+          + Add New Coupon
+        </button>
+      </div>
+
+      {/* FORM */}
+      {isAdding && (
+        <div className="bg-gray-50 p-6 rounded-xl shadow-lg mb-8 border">
+          <h2 className="text-2xl font-bold mb-4">
+            {editingId ? "Edit Coupon" : "Add New Coupon"}
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Coupon Code"
+              value={form.code}
+              onChange={(e) =>
+                setForm({ ...form, code: e.target.value.toUpperCase() })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+
+            <select
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              className="p-3 border rounded-lg text-lg"
+            >
+              <option value="percentage">Percentage (%)</option>
+              <option value="fixed">Fixed Amount (₹)</option>
+            </select>
+
+            <input
+              type="number"
+              placeholder={form.type === "percentage" ? "Discount %" : "Amount"}
+              value={form.value}
+              onChange={(e) =>
+                setForm({ ...form, value: e.target.value })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+
+            <input
+              type="number"
+              placeholder="Min Order Amount"
+              value={form.minAmount}
+              onChange={(e) =>
+                setForm({ ...form, minAmount: e.target.value })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+
+            {form.type === "percentage" && (
+              <input
+                type="number"
+                placeholder="Max Discount"
+                value={form.maxDiscount}
+                onChange={(e) =>
+                  setForm({ ...form, maxDiscount: e.target.value })
+                }
+                className="p-3 border rounded-lg text-lg"
+              />
+            )}
+
+            <input
+              type="number"
+              placeholder="Usage Limit"
+              value={form.usageLimit}
+              onChange={(e) =>
+                setForm({ ...form, usageLimit: e.target.value })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+
+            <input
+              type="number"
+              placeholder="Per User Limit"
+              value={form.perUserLimit}
+              onChange={(e) =>
+                setForm({ ...form, perUserLimit: e.target.value })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+
+            <input
+              type="date"
+              value={form.expiresAt}
+              onChange={(e) =>
+                setForm({ ...form, expiresAt: e.target.value })
+              }
+              className="p-3 border rounded-lg text-lg"
+            />
+          </div>
+
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={saveCoupon}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold"
+            >
+              {editingId ? "Update Coupon" : "Create Coupon"}
+            </button>
+
+            <button
+              onClick={resetForm}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-bold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LIST */}
+      <div className="grid gap-5">
+        {coupons.length === 0 ? (
+          <p className="text-center text-xl text-gray-600">
+            Koi coupon nahi mila
+          </p>
+        ) : (
+          coupons.map((coupon) => (
+            <div
+              key={coupon._id}
+              className="bg-white p-6 rounded-xl shadow-lg flex justify-between items-center border hover:border-green-500 transition"
+            >
+              <div>
+                <h3 className="text-2xl font-bold text-green-600">
+                  {coupon.code}
+                </h3>
+
+                <p>
+                  <strong>Type:</strong>{" "}
+                  {coupon.type === "percentage"
+                    ? `${coupon.value}%`
+                    : `₹${coupon.value}`}
+                </p>
+
+                <p>
+                  <strong>Per User Limit:</strong> {coupon.perUserLimit}
+                </p>
+
+                <p>
+                  <strong>Used:</strong> {coupon.usedCount} times
+                </p>
+
+                {coupon.expiresAt && (
+                  <p>
+                    <strong>Expires:</strong>{" "}
+                    {new Date(coupon.expiresAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => startEdit(coupon)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded font-bold"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteCoupon(coupon._id)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded font-bold"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 // Main App Component
 function App() {
   const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
@@ -2980,6 +3212,8 @@ function App() {
           <Route path="products" element={<ManageProducts />} />
           <Route path="contacts" element={<ManageContacts />} />
           <Route path="orders" element={<ManageOrders />} />
+          {/* // Inside your <Routes> block (where other admin routes are) */}
+          <Route path="coupons" element={<ManageCoupons />} />
           <Route path="orders/:id" element={<OrderDetails />} />
           <Route path="distributors" element={<ManageDistributors />} />
           <Route path="blogs" element={<ManageBlogs />} />
