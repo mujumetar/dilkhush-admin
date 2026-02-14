@@ -10,6 +10,13 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const cards = [
+    {
+      title: 'Manage Slider',
+      icon: Package,
+      color: 'from-yellow-500 to-yellow-600',
+      path: '/sliders',
+      description: 'Add & manage homepage slider'
+    },
     { title: 'Ingredients Control', icon: Package, color: 'from-pink-500 to-pink-600', path: '/ingredients', description: 'Add Sesame, Spices, Prices, Variants' },
     { title: 'Custom Mix Orders', icon: ShoppingCart, color: 'from-teal-500 to-teal-600', path: '/custom-orders', description: 'View & manage user-built mixes' },
     { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, your product inventory' },
@@ -23,6 +30,7 @@ const AdminDashboard = () => {
       path: '/coupons',
       description: 'Create & manage discount coupons'
     },
+
     {
       title: 'Distributors',
       icon: MapPin, color: 'from-blue-500 to-blue-600',
@@ -841,7 +849,7 @@ const CustomMixOrders = () => {
 };
 // Manage Orders Component
 const ManageOrders = () => {
- const navigate = useNavigate();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [formData, setFormData] = useState({
@@ -883,15 +891,15 @@ const ManageOrders = () => {
       const normalizedOrders = data.map(order => ({
         ...order,
         // Capitalize status (your API returns "pending", "Shipped", etc.)
-        status: order.status 
-          ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase() 
+        status: order.status
+          ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()
           : 'Pending',
 
         // Auto-detect payment status if missing
-        paymentStatus: order.paymentStatus 
-          ? order.paymentStatus 
-          : order.razorpayPaymentId 
-            ? 'Paid' 
+        paymentStatus: order.paymentStatus
+          ? order.paymentStatus
+          : order.razorpayPaymentId
+            ? 'Paid'
             : 'Pending',
       }));
 
@@ -1397,6 +1405,226 @@ const ManageOrders = () => {
     </div>
   );
 };
+
+
+const ManageSliders = () => {
+  const [sliders, setSliders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [form, setForm] = useState({
+    title: "",
+    subtitle: "",
+    buttonText: "",
+    buttonLink: "",
+    order: 0,
+    isActive: true,
+    image: null
+  });
+
+  useEffect(() => {
+    fetchSliders();
+  }, []);
+
+  const fetchSliders = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API}/api/sliders`);
+      setSliders(res.data);
+    } catch (err) {
+      alert("Failed to fetch sliders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async () => {
+    if (!form.image) {
+      alert("Image is required");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("subtitle", form.subtitle);
+      formData.append("buttonText", form.buttonText);
+      formData.append("buttonLink", form.buttonLink);
+      formData.append("order", form.order);
+      formData.append("isActive", form.isActive);
+      formData.append("image", form.image);
+
+      await axios.post(`${API}/admin/sliders`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      setForm({
+        title: "",
+        subtitle: "",
+        buttonText: "",
+        buttonLink: "",
+        order: 0,
+        isActive: true,
+        image: null
+      });
+
+      fetchSliders();
+    } catch (err) {
+      alert("Failed to add slider");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this slider?")) return;
+
+    await axios.delete(`${API}/admin/sliders/${id}`);
+    fetchSliders();
+  };
+
+  const toggleStatus = async (id, currentStatus) => {
+    await axios.patch(`${API}/admin/sliders/${id}`, {
+      isActive: !currentStatus
+    });
+    fetchSliders();
+  };
+
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">Manage Sliders</h1>
+
+      {/* Add Slider Form */}
+      <div className="bg-white p-6 rounded-xl shadow mb-10 grid md:grid-cols-2 gap-4">
+
+        <input
+          type="text"
+          placeholder="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="text"
+          placeholder="Subtitle"
+          value={form.subtitle}
+          onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="text"
+          placeholder="Button Text"
+          value={form.buttonText}
+          onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="text"
+          placeholder="Button Link"
+          value={form.buttonLink}
+          onChange={(e) => setForm({ ...form, buttonLink: e.target.value })}
+          className="border p-2 rounded"
+        />
+
+        <input
+          type="number"
+          placeholder="Order"
+          value={form.order}
+          onChange={(e) => setForm({ ...form, order: e.target.value })}
+          className="border p-2 rounded"
+        />
+
+        <select
+          value={form.isActive}
+          onChange={(e) =>
+            setForm({ ...form, isActive: e.target.value === "true" })
+          }
+          className="border p-2 rounded"
+        >
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+
+        {/* File Input */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) =>
+            setForm({ ...form, image: e.target.files[0] })
+          }
+          className="border p-2 rounded md:col-span-2"
+        />
+
+        <button
+          onClick={handleAdd}
+          disabled={submitting}
+          className="bg-blue-600 text-white px-6 py-2 rounded md:col-span-2 disabled:opacity-50"
+        >
+          {submitting ? "Uploading..." : "Add Slider"}
+        </button>
+      </div>
+
+      {/* Slider List */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-6">
+          {sliders.map((slide) => (
+            <div key={slide._id} className="bg-white shadow rounded-xl p-4">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="h-40 w-full object-cover rounded mb-3"
+              />
+
+              <h3 className="font-bold">{slide.title}</h3>
+              <p className="text-sm text-gray-500">{slide.subtitle}</p>
+
+              {slide.buttonText && (
+                <p className="text-xs mt-1">
+                  Button: {slide.buttonText}
+                </p>
+              )}
+
+              <p className="text-xs mt-1">
+                Order: {slide.order}
+              </p>
+
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={() =>
+                    toggleStatus(slide._id, slide.isActive)
+                  }
+                  className={`px-3 py-1 rounded text-white ${
+                    slide.isActive
+                      ? "bg-green-600"
+                      : "bg-gray-500"
+                  }`}
+                >
+                  {slide.isActive ? "Active" : "Inactive"}
+                </button>
+
+                <button
+                  onClick={() => handleDelete(slide._id)}
+                  className="bg-red-600 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 const ManageIngredients = () => {
   const [ingredients, setIngredients] = useState([]);
@@ -3210,6 +3438,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
           <Route path="products" element={<ManageProducts />} />
+          <Route path="sliders" element={<ManageSliders />} />
           <Route path="contacts" element={<ManageContacts />} />
           <Route path="orders" element={<ManageOrders />} />
           {/* // Inside your <Routes> block (where other admin routes are) */}
