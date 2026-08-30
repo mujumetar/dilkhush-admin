@@ -1,81 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send, MapPin, SendHorizonalIcon, RefreshCw, XCircle, CheckCircle2, Gift, Percent, IndianRupee, Calendar } from 'lucide-react';
+import { LayoutDashboard, Package, MessageSquare, ShoppingCart, BarChart3, Plus, Edit2, Trash2, X, ArrowLeft, Book, AlertCircle, Mail, MailCheck, Users, Users2, Send, MapPin, SendHorizonalIcon, RefreshCw, XCircle, CheckCircle2, Gift, Percent, IndianRupee, Calendar } from 'lucide-react';
 import NotFound from './components/NotFound';
 import axios from 'axios';
+import Layout from './components/layout/Layout';
+import ManageProducts from './pages/ManageProducts';
 // import { AlertCircle } from 'lucide-react';
 
 // Admin Dashboard Component
 const AdminDashboard = () => {
-  const navigate = useNavigate();
-
-  const cards = [
-    {
-      title: 'Manage Slider',
-      icon: Package,
-      color: 'from-yellow-500 to-yellow-600',
-      path: '/sliders',
-      description: 'Add & manage homepage slider'
-    },
-    { title: 'Ingredients Control', icon: Package, color: 'from-pink-500 to-pink-600', path: '/ingredients', description: 'Add Sesame, Spices, Prices, Variants' },
-    { title: 'Custom Mix Orders', icon: ShoppingCart, color: 'from-teal-500 to-teal-600', path: '/custom-orders', description: 'View & manage user-built mixes' },
-    { title: 'Manage Products', icon: Package, color: 'from-blue-500 to-blue-600', path: '/products', description: 'Add, edit, your product inventory' },
-    { title: 'Reminders', icon: SendHorizonalIcon, color: 'from-blue-500 to-blue-600', path: '/send-emails', description: 'send emails to customers' },
-    { title: 'Manage Contacts', icon: MessageSquare, color: 'from-purple-500 to-purple-600', path: '/contacts', description: 'Review and manage inquiries' },
-    // Inside the cards array in AdminDashboard component, add this:
-    {
-      title: 'Coupon Codes',
-      icon: Gift,                     // ← add this import at the top
-      color: 'from-pink-500 to-pink-600',
-      path: '/coupons',
-      description: 'Create & manage discount coupons'
-    },
-
-    {
-      title: 'Distributors',
-      icon: MapPin, color: 'from-blue-500 to-blue-600',
-      path: '/distributors',
-      description: 'add distributors'
-    },
-    { title: 'Manage Orders', icon: ShoppingCart, color: 'from-green-500 to-green-600', path: '/orders', description: 'Track, update, and manage orders' },
-    { title: 'Manage Blogs', icon: Book, color: 'from-indigo-500 to-indigo-600', path: '/blogs', description: 'Create and manage blog posts' },
-    { title: 'Analytics Dashboard', icon: BarChart3, color: 'from-orange-500 to-orange-600', path: '/analytics', description: 'View business insights and metrics' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem('adminLoggedIn');
-              window.location.href = '/admin';   // forces a full reload → Login page
-            }}
-            className="flex items-center gap-2 text-red-600 hover:text-red-800"
-          >
-            <X className="w-5 h-5" /> Logout
-          </button>
-          <p className="text-gray-600">Manage your e-commerce platform</p>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, Admin</h1>
+        <p className="text-gray-600">Here's what's happening with your store today.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+          <h3 className="text-green-800 font-semibold mb-1">Total Orders</h3>
+          <p className="text-3xl font-bold text-green-900">--</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {cards.map((card, index) => {
-            const Icon = card.icon;
-            return (
-              <div key={index} onClick={() => navigate(card.path)} className="group cursor-pointer">
-                <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
-                  <div className={`h-2 bg-gradient-to-r ${card.color}`}></div>
-                  <div className="p-6">
-                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${card.color} mb-4`}>
-                      <Icon className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h3>
-                    <p className="text-gray-600 text-sm">{card.description}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+          <h3 className="text-blue-800 font-semibold mb-1">Total Products</h3>
+          <p className="text-3xl font-bold text-blue-900">--</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+          <h3 className="text-purple-800 font-semibold mb-1">Active Users</h3>
+          <p className="text-3xl font-bold text-purple-900">--</p>
+        </div>
+      </div>
+      
+      <div className="bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300">
+        <p className="text-gray-500 mb-4">Select an option from the sidebar to manage your store.</p>
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-200 text-gray-400">
+          <LayoutDashboard size={24} />
         </div>
       </div>
     </div>
@@ -164,369 +123,7 @@ const Login = () => {
 
 
 // Manage Products Component
-const ManageProducts = () => {
-  const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    category: '',
-    price: '',
-    stock: '',
-    description: '',
-    image: null,
-  });
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/products`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch products');
-      }
-      const data = await response.json();
-      setProducts(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Fetch products error:', err);
-      setError(`Error fetching products: ${err.message}`);
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validate form data
-    if (!formData.name || !formData.slug || !formData.category || !formData.price || !formData.stock) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      const url = editingId
-        ? `${import.meta.env.VITE_API_URL}/admin/products/${editingId}`
-        : `${import.meta.env.VITE_API_URL}/admin/products`;
-      const method = editingId ? 'PUT' : 'POST';
-      const token = localStorage.getItem('adminToken'); // Retrieve token
-
-      let body;
-      let headers = { Authorization: `Bearer ${token}` };
-
-      if (formData.image || !editingId) {
-        const data = new FormData();
-        data.append('name', formData.name);
-        data.append('slug', formData.slug);
-        data.append('category', formData.category);
-        data.append('price', formData.price);
-        data.append('stock', formData.stock);
-        if (formData.description) data.append('description', formData.description);
-        if (formData.image) data.append('image', formData.image);
-        body = data;
-      } else {
-        body = JSON.stringify({
-          name: formData.name,
-          slug: formData.slug,
-          category: formData.category,
-          price: formData.price,
-          stock: formData.stock,
-          description: formData.description,
-        });
-        headers['Content-Type'] = 'application/json';
-      }
-
-      const response = await fetch(url, { method, headers, body });
-
-      if (!response.ok) {
-        let errorMessage = 'Unknown error';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
-        } catch {
-          errorMessage = `HTTP ${response.status}: Failed to ${editingId ? 'update' : 'add'} product`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      await fetchProducts();
-      resetForm();
-      setShowForm(false);
-    } catch (err) {
-      console.error('Submit product error:', err);
-      setError(`Error: ${err.message}`);
-    }
-  };
-
-  const handleEdit = (product) => {
-    setFormData({
-      name: product.name,
-      slug: product.slug,
-      category: product.category,
-      price: product.price,
-      stock: product.stock,
-      description: product.description || '',
-      image: null,
-    });
-    setEditingId(product._id);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/products/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete product');
-      }
-      await fetchProducts();
-    } catch (err) {
-      console.error('Delete product error:', err);
-      setError(`Error deleting product: ${err.message}`);
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      slug: '',
-      category: '',
-      price: '',
-      stock: '',
-      description: '',
-      image: null,
-    });
-    setEditingId(null);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/')} className="p-2 hover:bg-white rounded-lg transition-colors">
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Manage Products</h1>
-              <p className="text-gray-600">Add, edit, and manage your product catalog</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-          >
-            {showForm ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-            {showForm ? 'Cancel' : 'Add Product'}
-          </button>
-        </div>
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-        {showForm && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              {editingId ? 'Edit Product' : 'Add New Product'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Product Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Slug</label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price (₹)</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
-                  <input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Image</label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4 mt-6">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
-                >
-                  {editingId ? 'Update Product' : 'Add Product'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetForm();
-                    setShowForm(false);
-                  }}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Slug</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
-                      <div className="flex justify-center items-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : products.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                      No products found.
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product) => (
-                    <tr key={product._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{product.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{product.slug}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">{product.category}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">₹{product.price}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${product.stock > 10 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {product.stock}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(product)}
-                            className="p-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product._id)}
-                            className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Component removed and imported from src/pages/ManageProducts.jsx
 
 // Manage Contacts Component
 const ManageContacts = () => {
@@ -3436,21 +3033,22 @@ function App() {
     <Router basename="/admin">
       {isLoggedIn ? (
         <Routes>
-          <Route path="/" element={<AdminDashboard />} />
-          <Route path="products" element={<ManageProducts />} />
-          <Route path="sliders" element={<ManageSliders />} />
-          <Route path="contacts" element={<ManageContacts />} />
-          <Route path="orders" element={<ManageOrders />} />
-          {/* // Inside your <Routes> block (where other admin routes are) */}
-          <Route path="coupons" element={<ManageCoupons />} />
-          <Route path="orders/:id" element={<OrderDetails />} />
-          <Route path="distributors" element={<ManageDistributors />} />
-          <Route path="blogs" element={<ManageBlogs />} />
-          <Route path="ingredients" element={<ManageIngredients />} />
-          <Route path="custom-orders" element={<CustomMixOrders />} />
-          <Route path="send-emails" element={<SendEmails />} />
-          <Route path="blogs/:id" element={<BlogDetails />} />
-          <Route path="analytics" element={<AnalyticsDashboard />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<AdminDashboard />} />
+            <Route path="products" element={<ManageProducts />} />
+            <Route path="sliders" element={<ManageSliders />} />
+            <Route path="contacts" element={<ManageContacts />} />
+            <Route path="orders" element={<ManageOrders />} />
+            <Route path="coupons" element={<ManageCoupons />} />
+            <Route path="orders/:id" element={<OrderDetails />} />
+            <Route path="distributors" element={<ManageDistributors />} />
+            <Route path="blogs" element={<ManageBlogs />} />
+            <Route path="ingredients" element={<ManageIngredients />} />
+            <Route path="custom-orders" element={<CustomMixOrders />} />
+            <Route path="send-emails" element={<SendEmails />} />
+            <Route path="blogs/:id" element={<BlogDetails />} />
+            <Route path="analytics" element={<AnalyticsDashboard />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       ) : (
