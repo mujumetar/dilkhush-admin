@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Book,
   Send,
-  BarChart3
+  BarChart3,
+  Truck
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -24,6 +25,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'Ingredients', path: '/ingredients', icon: Package },
     { name: 'Custom Orders', path: '/custom-orders', icon: ShoppingCart },
     { name: 'Coupons', path: '/coupons', icon: Ticket },
+    { name: 'Shipping', path: '/shipping', icon: Truck },
     { name: 'Distributors', path: '/distributors', icon: Users },
     { name: 'Sliders', path: '/sliders', icon: ImageIcon },
     { name: 'Blogs', path: '/blogs', icon: Book },

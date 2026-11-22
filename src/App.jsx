@@ -2733,6 +2733,86 @@ const AnalyticsDashboard = () => {
   );
 };
 
+// ─── Shipping settings: free in Gujarat, dynamic outside ───
+const ManageShipping = () => {
+  const [form, setForm] = useState({ freeStates: 'Gujarat', outsideBase: '', outsidePerKg: '', outsideFreeAbove: '' });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    axios.get(`${API}/admin/shipping-settings`)
+      .then(res => setForm({
+        freeStates: (res.data.freeStates || []).join(', '),
+        outsideBase: res.data.outsideBase ?? '',
+        outsidePerKg: res.data.outsidePerKg ?? '',
+        outsideFreeAbove: res.data.outsideFreeAbove ?? 0,
+      }))
+      .catch(() => setMsg('Could not load shipping settings'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+  const base = Number(form.outsideBase) || 0, perKg = Number(form.outsidePerKg) || 0;
+  const example = kg => base + (kg - 1) * perKg;
+
+  const save = async (e) => {
+    e.preventDefault();
+    setSaving(true); setMsg('');
+    try {
+      await axios.put(`${API}/admin/shipping-settings`, {
+        freeStates: form.freeStates.split(',').map(s => s.trim()).filter(Boolean),
+        outsideBase: Number(form.outsideBase),
+        outsidePerKg: Number(form.outsidePerKg),
+        outsideFreeAbove: Number(form.outsideFreeAbove) || 0,
+      });
+      setMsg('Saved ✓ — new rates apply to the next order');
+    } catch (err) {
+      setMsg(err.response?.data?.error || 'Save failed');
+    } finally { setSaving(false); }
+  };
+
+  if (loading) return <div className="p-8 text-gray-500">Loading…</div>;
+
+  const input = 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500';
+  return (
+    <div className="p-6 max-w-3xl">
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Shipping Charges</h1>
+      <p className="text-gray-500 mb-6">Free delivery inside the states below. Outside, charges are calculated from the cart weight (kg).</p>
+      <form onSubmit={save} className="bg-white rounded-xl shadow p-6 space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Free delivery states (comma separated)</label>
+          <input className={input} value={form.freeStates} onChange={set('freeStates')} placeholder="Gujarat" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Outside: charge for first kg (₹)</label>
+            <input type="number" min="0" required className={input} value={form.outsideBase} onChange={set('outsideBase')} />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Outside: each extra kg (₹)</label>
+            <input type="number" min="0" required className={input} value={form.outsidePerKg} onChange={set('outsidePerKg')} />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Outside: free delivery above order value (₹, 0 = never)</label>
+          <input type="number" min="0" className={input} value={form.outsideFreeAbove} onChange={set('outsideFreeAbove')} />
+        </div>
+        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+          <p className="font-semibold mb-1">Example outside {form.freeStates.split(',')[0] || 'Gujarat'}:</p>
+          <p>1 kg → ₹{example(1)} · 2 kg → ₹{example(2)} · 5 kg → ₹{example(5)}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <button disabled={saving} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold px-6 py-2 rounded-lg">
+            {saving ? 'Saving…' : 'Save Settings'}
+          </button>
+          {msg && <span className="text-sm text-gray-600">{msg}</span>}
+        </div>
+      </form>
+    </div>
+  );
+};
+
 const ManageCoupons = () => {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3040,6 +3120,7 @@ function App() {
             <Route path="contacts" element={<ManageContacts />} />
             <Route path="orders" element={<ManageOrders />} />
             <Route path="coupons" element={<ManageCoupons />} />
+            <Route path="shipping" element={<ManageShipping />} />
             <Route path="orders/:id" element={<OrderDetails />} />
             <Route path="distributors" element={<ManageDistributors />} />
             <Route path="blogs" element={<ManageBlogs />} />
