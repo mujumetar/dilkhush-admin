@@ -48,8 +48,30 @@ const ManageProducts = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
+  // Large phone photos exceed the server's ~4.5 MB upload limit — shrink them in the browser first
+  const shrinkImage = (file, maxSide = 1600, quality = 0.85) =>
+    new Promise((resolve) => {
+      if (!file || !file.type.startsWith('image/') || file.size <= 1.5 * 1024 * 1024) return resolve(file);
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+
+  const handleFileChange = async (e) => {
+    const file = await shrinkImage(e.target.files[0]);
+    setFormData((prev) => ({ ...prev, image: file }));
   };
 
   const handleSubmit = async (e) => {
@@ -57,7 +79,9 @@ const ManageProducts = () => {
     setError(null);
 
     // Validate form data
-    if (!formData.name || !formData.slug || !formData.category || !formData.price || !formData.stock) {
+    // price/stock may legitimately be 0, so only treat empty as missing
+    const isEmpty = (v) => v === '' || v === null || v === undefined;
+    if (!formData.name || !formData.slug || !formData.category || isEmpty(formData.price) || isEmpty(formData.stock)) {
       setError('Please fill in all required fields');
       return;
     }
